@@ -1,0 +1,26 @@
+{
+  "name": "gasolineras",
+  "build": { "dockerfile": "Dockerfile" },
+  "runArgs": ["--network=host"],
+  "forwardPorts": [3000],
+  "portsAttributes": { "3000": { "label": "Next.js Dev Server" } },
+  "containerEnv": {
+    "GH_TOKEN": "${localEnv:GH_TOKEN}"
+  },
+  "postCreateCommand": "if [ -n \"${GH_TOKEN}\" ]; then git clone https://${GH_TOKEN}@github.com/Ferezoz/dotfiles.git ~/dotfiles && ~/dotfiles/install/apt.sh && ~/dotfiles/install/tools.sh; fi",
+  "postStartCommand": "pnpm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "mikestead.dotenv",
+        "anthropics.claude-code"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      }
+    }
+  }
+}
