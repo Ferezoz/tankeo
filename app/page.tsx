@@ -99,14 +99,25 @@ export default function Home() {
           Encuentra las gasolineras más cercanas y baratas en tu área.
         </p>
         {geo.status === "requesting" ? (
-          <div className="flex items-center gap-3 text-gray-400">
-            <div className="w-5 h-5 border-2 border-gray-300 dark:border-white/40 border-t-transparent dark:border-t-transparent rounded-full animate-spin" />
-            <span>Obteniendo ubicación...</span>
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-3 text-gray-400">
+              <div className="w-5 h-5 border-2 border-gray-300 dark:border-white/40 border-t-transparent dark:border-t-transparent rounded-full animate-spin" />
+              <span>Esperando permiso...</span>
+            </div>
+            <p className="text-sm text-gray-500 max-w-xs">
+              Acepta el permiso de ubicación en la ventana de tu navegador.
+            </p>
+            <button
+              onClick={requestLocation}
+              className="text-sm text-green-600 dark:text-green-400 underline cursor-pointer"
+            >
+              ¿No aparece el permiso? Intentar de nuevo
+            </button>
           </div>
         ) : (
           <button
             onClick={requestLocation}
-            className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors"
+            className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors cursor-pointer"
           >
             📍 Compartir ubicación
           </button>
