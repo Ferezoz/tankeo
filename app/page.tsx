@@ -61,9 +61,15 @@ export default function Home() {
     );
   }, []);
 
-  // Auto-request on mount
+  // Auto-request on mount (only if not previously denied)
   useEffect(() => {
-    requestLocation();
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: "geolocation" }).then((result) => {
+        if (result.state !== "denied") requestLocation();
+      });
+    } else {
+      requestLocation();
+    }
   }, [requestLocation]);
 
   // Fetch stations whenever location, search center, or fuel type changes
@@ -128,15 +134,17 @@ export default function Home() {
 
   if (geo.status === "denied") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-4 text-center">
+      <div className="flex flex-col items-center justify-center min-h-[100dvh] gap-4 px-4 text-center">
         <div className="text-5xl">🚫</div>
-        <h1 className="text-2xl font-bold text-white">Ubicación denegada</h1>
-        <p className="text-gray-400 max-w-sm">{geo.message}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ubicación denegada</h1>
+        <p className="text-gray-500 max-w-sm text-sm">
+          Para usar esta app necesitas permitir el acceso a tu ubicación. Ve a los ajustes de tu navegador y activa el permiso de ubicación para este sitio.
+        </p>
         <button
           onClick={requestLocation}
-          className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+          className="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-xl transition-colors cursor-pointer"
         >
-          Intentar de nuevo
+          Ya lo activé, intentar de nuevo
         </button>
       </div>
     );
