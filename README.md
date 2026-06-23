@@ -2,7 +2,7 @@
 
 Find the nearest and cheapest gas stations in Mexico using your current location.
 
-Built with Next.js 16, React 19, Leaflet + OpenStreetMap (no API key needed), and the Mexican government's public fuel price API.
+Built with Next.js 16, React 19, Leaflet + OpenStreetMap (no API key needed), and the CRE (Comisión Reguladora de Energía) public XML feeds for real-time fuel prices.
 
 ## Features
 
@@ -28,7 +28,18 @@ Open [http://localhost:3000](http://localhost:3000) and grant location access.
 pnpm dlx vercel deploy --prod
 ```
 
-No environment variables required — the data source is the public Mexican government API at `https://api.datos.gob.mx/v1/precio-gasolinas`.
+No environment variables required for the data source.
+
+## Data source
+
+Two public XML endpoints from CRE (Comisión Reguladora de Energía), fetched in parallel and joined by `place_id`:
+
+| Endpoint | What it provides |
+|---|---|
+| `https://publicacionexterna.azurewebsites.net/publicaciones/places` | ~11,000 stations with name, CRE permit ID, and lat/lng |
+| `https://publicacionexterna.azurewebsites.net/publicaciones/prices` | Current prices per station (regular, premium, diesel) |
+
+The Next.js API route at `/api/stations` fetches both, parses the XML, joins on `place_id`, filters to stations within 10 km of the user using the Haversine formula, and returns the 30 nearest.
 
 ## Tech stack
 

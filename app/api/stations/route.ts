@@ -2,70 +2,71 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Station, FuelType } from "@/app/lib/stations";
 import { haversineDistance } from "@/app/lib/distance";
 
-// The datos.gob.mx API response shape (approximate)
-interface GobMxStation {
-  id?: string;
-  cre_id?: string;
-  name?: string;
-  nombre?: string;
-  brand?: string;
-  razon_social?: string;
-  address?: string;
-  direccion?: string;
-  latitude?: number;
-  latitud?: number;
-  longitude?: number;
-  longitud?: number;
-  price?: number;
-  precio?: number;
-  fuel_type?: string;
-  tipo_combustible?: string;
-  last_update?: string;
-  fecha_actualizacion?: string;
+const LEGAL_SUFFIXES = /[\s,]+(S\.?A\.?\s+De\s+C\.?V\.?|S\s+De\s+R\.?L\.?\s+(De\s+C\.?V\.?)?|S\.?A\.?P\.?I\.?\s+De\s+C\.?V\.?|S\.?C\.?|Inc\.?|S\.?A\.?)\.?$/i;
+
+function cleanName(raw: string): string {
+  const titleCased = raw.toLowerCase().split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return titleCased.replace(LEGAL_SUFFIXES, "").trim();
 }
 
-interface GobMxResponse {
-  results?: GobMxStation[];
-  data?: GobMxStation[];
-  pagination?: {
-    total: number;
-    pageSize: number;
-    page: number;
-  };
+
+const PLACES_URL = "https://publicacionexterna.azurewebsites.net/publicaciones/places";
+const PRICES_URL = "https://publicacionexterna.azurewebsites.net/publicaciones/prices";
+const RADIUS_KM = 10;
+
+interface PlaceEntry {
+  placeId: string;
+  name: string;
+  cre_id: string;
+  lat: number;
+  lng: number;
 }
 
-function normalizeStation(
-  raw: GobMxStation,
-  fuelType: FuelType,
-  userLat: number,
-  userLng: number
-): Station | null {
-  const lat = Number(raw.latitud ?? raw.latitude);
-  const lng = Number(raw.longitud ?? raw.longitude);
-  const price = Number(raw.precio ?? raw.price);
+interface PriceEntry {
+  placeId: string;
+  regular: number | null;
+  premium: number | null;
+  diesel: number | null;
+}
 
-  if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null;
+function parsePlaces(xml: string): Map<string, PlaceEntry> {
+  const map = new Map<string, PlaceEntry>();
+  const placeRe = /<place place_id="(\d+)">([\s\S]*?)<\/place>/g;
+  let m: RegExpExecArray | null;
+  while ((m = placeRe.exec(xml)) !== null) {
+    const placeId = m[1];
+    const body = m[2];
+    const name = (/<name>([\s\S]*?)<\/name>/.exec(body)?.[1] ?? "").trim();
+    const cre_id = (/<cre_id>([\s\S]*?)<\/cre_id>/.exec(body)?.[1] ?? "").trim();
+    const x = parseFloat(/<x>([\s\S]*?)<\/x>/.exec(body)?.[1] ?? "");
+    const y = parseFloat(/<y>([\s\S]*?)<\/y>/.exec(body)?.[1] ?? "");
+    if (!isNaN(x) && !isNaN(y)) {
+      map.set(placeId, { placeId, name, cre_id, lat: y, lng: x });
+    }
+  }
+  return map;
+}
 
-  const id = String(raw.cre_id ?? raw.id ?? Math.random());
-  const name = String(raw.nombre ?? raw.name ?? "Gasolinera");
-  const brand = String(raw.razon_social ?? raw.brand ?? "Sin marca");
-  const address = String(raw.direccion ?? raw.address ?? "");
-  const lastUpdate = String(
-    raw.fecha_actualizacion ?? raw.last_update ?? new Date().toISOString()
-  );
-
-  const priceValue = isNaN(price) || price === 0 ? null : price;
-
-  const prices: Station["prices"] = {
-    magna: null,
-    premium: null,
-    diesel: null,
-  };
-  prices[fuelType] = priceValue;
-
-  const distance = haversineDistance(userLat, userLng, lat, lng);
-
-  return { id, name, brand, address, lat, lng, prices, distance, lastUpdate };
+function parsePrices(xml: string): Map<string, PriceEntry> {
+  const map = new Map<string, PriceEntry>();
+  const placeRe = /<place place_id="(\d+)">([\s\S]*?)<\/place>/g;
+  let m: RegExpExecArray | null;
+  while ((m = placeRe.exec(xml)) !== null) {
+    const placeId = m[1];
+    const body = m[2];
+    const getPrice = (type: string) => {
+      const val = parseFloat(
+        new RegExp(`<gas_price type="${type}">(.*?)<\\/gas_price>`).exec(body)?.[1] ?? ""
+      );
+      return isNaN(val) ? null : val;
+    };
+    const entry = map.get(placeId) ?? { placeId, regular: null, premium: null, diesel: null };
+    entry.regular = entry.regular ?? getPrice("regular");
+    entry.premium = entry.premium ?? getPrice("premium");
+    entry.diesel = entry.diesel ?? getPrice("diesel");
+    map.set(placeId, entry);
+  }
+  return map;
 }
 
 export async function GET(request: NextRequest) {
@@ -75,41 +76,64 @@ export async function GET(request: NextRequest) {
   const fuelType = (searchParams.get("fuelType") ?? "magna") as FuelType;
 
   if (isNaN(lat) || isNaN(lng)) {
-    return NextResponse.json(
-      { error: "lat and lng are required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "lat and lng are required" }, { status: 400 });
   }
 
   try {
-    const apiUrl = new URL("https://api.datos.gob.mx/v1/precio-gasolinas");
-    apiUrl.searchParams.set("lat", String(lat));
-    apiUrl.searchParams.set("lng", String(lng));
-    apiUrl.searchParams.set("type", fuelType);
-    apiUrl.searchParams.set("pageSize", "50");
+    const [placesRes, pricesRes] = await Promise.all([
+      fetch(PLACES_URL, { next: { revalidate: 3600 } }),
+      fetch(PRICES_URL, { next: { revalidate: 3600 } }),
+    ]);
 
-    const res = await fetch(apiUrl.toString(), {
-      next: { revalidate: 3600 }, // cache 1 hour
-      headers: { Accept: "application/json" },
-    });
+    if (!placesRes.ok) throw new Error(`places responded ${placesRes.status}`);
+    if (!pricesRes.ok) throw new Error(`prices responded ${pricesRes.status}`);
 
-    if (!res.ok) {
-      throw new Error(`datos.gob.mx responded with ${res.status}`);
+    const [placesXml, pricesXml] = await Promise.all([placesRes.text(), pricesRes.text()]);
+
+    const places = parsePlaces(placesXml);
+    const prices = parsePrices(pricesXml);
+
+    // Map fuelType to price key
+    const priceKey: Record<FuelType, keyof PriceEntry> = {
+      magna: "regular",
+      premium: "premium",
+      diesel: "diesel",
+    };
+    const key = priceKey[fuelType];
+
+    const stations: Station[] = [];
+
+    for (const [placeId, place] of places) {
+      const distance = haversineDistance(lat, lng, place.lat, place.lng);
+      if (distance > RADIUS_KM) continue;
+
+      const price = prices.get(placeId);
+      const priceValue = price ? (price[key] as number | null) : null;
+
+      stations.push({
+        id: placeId,
+        name: cleanName(place.name),
+        brand: "",
+        address: "",
+        lat: place.lat,
+        lng: place.lng,
+        prices: {
+          magna: price?.regular ?? null,
+          premium: price?.premium ?? null,
+          diesel: price?.diesel ?? null,
+        },
+        distance,
+        lastUpdate: new Date().toISOString(),
+      });
+
+      void priceValue;
     }
 
-    const json: GobMxResponse = await res.json();
-    const rawList: GobMxStation[] = json.results ?? json.data ?? [];
+    stations.sort((a, b) => a.distance - b.distance);
 
-    const stations: Station[] = rawList
-      .map((raw) => normalizeStation(raw, fuelType, lat, lng))
-      .filter((s): s is Station => s !== null)
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 30);
-
-    return NextResponse.json({ stations });
+    return NextResponse.json({ stations: stations.slice(0, 30) });
   } catch (err) {
     console.error("Error fetching stations:", err);
-    // Return empty list on error — client shows a friendly message
     return NextResponse.json({ stations: [], error: String(err) });
   }
 }
