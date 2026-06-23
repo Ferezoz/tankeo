@@ -1,17 +1,16 @@
 # Gasolineras MX ⛽
 
-Find the nearest and cheapest gas stations in Mexico using your current location.
-
-Built with Next.js 16, React 19, Leaflet + OpenStreetMap (no API key needed), and the CRE (Comisión Reguladora de Energía) public XML feeds for real-time fuel prices.
+Find the nearest and cheapest gas stations in Mexico using your current location. Works as a PWA — installable on iOS via "Add to Home Screen".
 
 ## Features
 
-- Geolocation permission flow
-- Interactive map with station markers
-- Sort by distance or by price
+- Interactive map with price labels on markers (green = cheapest, blue = closest)
+- Sort stations by price or distance
 - Filter by Magna, Premium, or Diesel
-- Highlights cheapest and closest stations
-- Fully responsive (mobile-first)
+- "Buscar en esta zona" — pan the map and search a new area
+- "Cómo llegar" — opens Google Maps, Apple Maps, or Waze (remembers your preference)
+- Light/dark theme following system preference
+- Fully responsive — desktop and mobile
 
 ## Run locally
 
@@ -20,34 +19,30 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and grant location access.
+Open http://localhost:3000 and grant location permission when prompted.
 
-## Deploy to Vercel
+## Deploy
 
-```bash
-pnpm dlx vercel deploy --prod
-```
-
-No environment variables required for the data source.
+Push to `main` — Vercel auto-deploys. No environment variables needed.
 
 ## Data source
 
-Two public XML endpoints from CRE (Comisión Reguladora de Energía), fetched in parallel and joined by `place_id`:
+Two public XML endpoints from CRE (Comisión Reguladora de Energía):
 
 | Endpoint | What it provides |
 |---|---|
-| `https://publicacionexterna.azurewebsites.net/publicaciones/places` | ~11,000 stations with name, CRE permit ID, and lat/lng |
-| `https://publicacionexterna.azurewebsites.net/publicaciones/prices` | Current prices per station (regular, premium, diesel) |
+| `.../publicaciones/places` | ~11,000 stations with name, permit ID, lat/lng |
+| `.../publicaciones/prices` | Current prices per station (regular, premium, diesel) |
 
-The Next.js API route at `/api/stations` fetches both, parses the XML, joins on `place_id`, filters to stations within 10 km of the user using the Haversine formula, and returns the 30 nearest.
+The API route at `/api/stations` fetches both in parallel, joins on `place_id`, filters to 10 km, and returns the 30 nearest stations. Responses are cached 1 hour server-side.
 
 ## Tech stack
 
 | Tool | Version |
-|------|---------|
-| Next.js | 16.2.9 |
-| React | 19.0.0 |
+|---|---|
+| Next.js | 16 |
+| React | 19 |
 | TypeScript | 5 |
 | Tailwind CSS | v4 |
-| react-leaflet | 5 |
+| Leaflet | 1.9 |
 | pnpm | latest |

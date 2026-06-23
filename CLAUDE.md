@@ -1,15 +1,19 @@
 # Gasolineras MX
 
-Next.js 16 app (App Router, React 19, TypeScript, Tailwind v4, pnpm) that shows Mexican gas stations near the user — closest and cheapest — with an interactive map.
+Next.js 16 app (App Router, React 19, TypeScript, Tailwind v4, pnpm) that shows Mexican gas stations near the user — closest and cheapest — with an interactive map. Works as a PWA (installable on iOS via "Add to Home Screen").
 
 ## What it does
 
 1. User opens the app → browser asks for geolocation permission
-2. Once location is granted, the app fetches nearby stations from the CRE XML feeds
-3. Shows an interactive map (Leaflet + OpenStreetMap, no API key needed) with colored markers
-4. Shows a sortable list of stations — toggle between "by distance" and "by price"
-5. Highlights the closest station and the cheapest station with badges
+2. Once granted, fetches nearby stations from CRE XML feeds (10 km radius, 30 stations max)
+3. Shows an interactive Leaflet map with price-labeled markers (green = cheapest, blue = closest, white = selected)
+4. Shows a sortable list — sort by price (default) or distance
+5. Summary tiles for cheapest and closest stations at the top of the list
 6. Fuel type selector: Magna, Premium, Diesel
+7. "Buscar en esta zona" button appears when panning the map — re-fetches for the new center
+8. Re-center button returns to GPS location
+9. "Cómo llegar" opens preferred navigation app (Google Maps / Apple Maps / Waze — saved in localStorage)
+10. Light/dark theme follows system preference
 
 ## Data source
 
@@ -20,18 +24,22 @@ Two public XML endpoints from CRE (Comisión Reguladora de Energía), no authent
 
 The old `api.datos.gob.mx/v1/precio-gasolinas` API is dead. The new `datos.gob.mx` (Sistema Ajolote) only offers monthly CSV downloads with no coordinates. These CRE Azure endpoints are the only live real-time source with per-station location + prices.
 
-The API route at `/api/stations?lat=X&lng=Y&fuelType=magna` fetches both XMLs in parallel, parses with regex, joins on `place_id`, filters to a 10 km radius using Haversine, and returns the 30 nearest stations.
+The API route at `/api/stations?lat=X&lng=Y&fuelType=magna` fetches both XMLs in parallel (cached 1 hour by Next.js), parses with regex, joins on `place_id`, strips legal suffixes from station names, filters to 10 km using Haversine, and returns the 30 nearest stations sorted by distance.
 
 ## Key files
 
-- `app/page.tsx` — main client component ("use client"), owns geolocation state machine and fuel type selection
-- `app/api/stations/route.ts` — fetches CRE XML feeds, parses and joins by place_id, filters by distance, returns sorted Station[]
-- `app/components/Map.tsx` — Leaflet map, blue marker = user, green = cheapest station, red = others
-- `app/components/MapWrapper.tsx` — wraps Map with `dynamic(..., { ssr: false })` because Leaflet requires browser APIs
-- `app/components/StationList.tsx` — sortable list, summary tiles for cheapest and closest at the top
-- `app/components/StationCard.tsx` — card with price, distance, address, cheapest/closest badges
-- `app/lib/stations.ts` — Station type, FuelType type
+- `app/page.tsx` — two-column layout, geolocation state machine, fuel type + search center state
+- `app/api/stations/route.ts` — fetches CRE XML feeds, parses, joins by `place_id`, filters by distance
+- `app/components/Map.tsx` — Leaflet map with price divIcons, "Buscar en esta zona" button, re-center button
+- `app/components/MapWrapper.tsx` — wraps Map with `dynamic(..., { ssr: false })`
+- `app/components/StationList.tsx` — sort toggle, summary tiles (cheapest + closest), scrollable card list
+- `app/components/StationCard.tsx` — price, distance, badges, "Cómo llegar" link
+- `app/components/DirectionsButton.tsx` — directions link + `MapAppPicker` modal for nav app preference
+- `app/lib/stations.ts` — `Station` type, `FuelType` type
 - `app/lib/distance.ts` — Haversine formula + distance formatter
+- `app/icon.tsx` — auto-generated favicon (32×32)
+- `app/apple-icon.tsx` — auto-generated Apple touch icon (180×180)
+- `public/manifest.json` — PWA manifest
 
 ## Run locally
 
@@ -46,25 +54,18 @@ Open http://localhost:3000 and grant location permission when prompted.
 
 ## Deploy
 
-```bash
-vercel deploy --prod
-```
-
-No environment variables needed for the data source — the CRE feeds are fully public.
-
-## What still needs work
-
-- **UI polish** — styling can be improved. The app uses Tailwind v4 (CSS-first, no tailwind.config.js needed).
-- **Vercel deployment** — connect the GitHub repo (github.com/Ferezoz/gasolineras) to Vercel for auto-deploys on push to main.
-- **Filter by brand** — optionally add a brand filter (Pemex, BP, Shell, etc.)
-- **Radius control** — let the user adjust the search radius (currently fixed at 10 km)
-- **Address** — the CRE places feed doesn't include street addresses; could geocode by coordinates if needed
+Push to `main` — Vercel auto-deploys on every push. No environment variables needed.
 
 ## Architecture decisions
 
 - Map is client-only (`ssr: false`) because Leaflet uses `window` and `document`
-- The main `page.tsx` is a client component because it needs `navigator.geolocation`
-- API route proxies the CRE feeds to avoid CORS issues in the browser
-- XML is parsed with regex (no library) — the CRE feed structure is simple and stable
-- No auth, no database — purely reads from the public CRE feeds
+- `page.tsx` is a client component because it needs `navigator.geolocation`
+- API route proxies CRE feeds to avoid CORS; XML parsed with regex (no library needed — feed structure is simple and stable)
+- Server-side Next.js fetch cache (`revalidate: 3600`) means CRE XMLs are fetched at most once per hour
+- Station names are title-cased and stripped of Mexican legal suffixes (Sa De Cv, S De Rl De Cv, etc.)
+- Search center state (`searchCenter`) separates "where to search" from GPS location — enables pan-and-search without losing the user's position
+- Nav app preference stored in `localStorage`, read on mount
+- Light/dark theme via Tailwind `dark:` prefix (media query, no toggle needed)
+- PWA: manifest + Apple meta tags + `viewport-fit=cover` + safe area insets for iPhone notch
+- `dvh` units used throughout to handle mobile browser chrome correctly
 - pnpm is the package manager (not npm or yarn)
