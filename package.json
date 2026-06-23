@@ -2,13 +2,16 @@
   "name": "gasolineras",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write \"**/*.{js,ts,tsx,md,json}\""
+    "dev": "DOTENV_PRIVATE_KEY=${GASOLINERAS_DOTENV_PRIVATE_KEY} dotenvx run -- next dev --turbo",
+    "build": "DOTENV_PRIVATE_KEY=${GASOLINERAS_DOTENV_PRIVATE_KEY} dotenvx run -- next build",
+    "start": "DOTENV_PRIVATE_KEY=${GASOLINERAS_DOTENV_PRIVATE_KEY} dotenvx run -- next start",
+    "lint": "DOTENV_PRIVATE_KEY=${GASOLINERAS_DOTENV_PRIVATE_KEY} dotenvx run -- next lint",
+    "format": "prettier --write \"**/*.{js,ts,tsx,md,json}\"",
+    "dotenvx:encrypt": "dotenvx encrypt",
+    "dotenvx:decrypt": "dotenvx decrypt"
   },
   "dependencies": {
+    "@dotenvx/dotenvx": "^1.51.1",
     "leaflet": "^1.9.4",
     "next": "16.2.9",
     "react": "^19.0.0",
