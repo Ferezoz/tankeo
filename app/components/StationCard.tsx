@@ -39,12 +39,12 @@ export default function StationCard({
           <p className="font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-2">{station.name}</p>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {isCheapest && (
-              <span className="text-xs bg-green-900/70 text-green-300 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/70 dark:text-green-300 px-2 py-0.5 rounded-full font-medium">
                 💰 Más barata
               </span>
             )}
             {isClosest && (
-              <span className="text-xs bg-blue-900/70 text-blue-300 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/70 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
                 📍 Más cercana
               </span>
             )}
