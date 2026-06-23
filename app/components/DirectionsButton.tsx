@@ -47,7 +47,7 @@ export default function DirectionsButton({ lat, lng, fullWidth = false }: Direct
       target="_blank"
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
-      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-300 hover:bg-gray-100 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer ${fullWidth ? "w-full justify-center" : ""}`}
+      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 border border-gray-300 hover:bg-gray-200 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer ${fullWidth ? "w-full justify-center" : ""}`}
     >
       → Cómo llegar
     </a>

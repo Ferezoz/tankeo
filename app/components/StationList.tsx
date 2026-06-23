@@ -91,9 +91,16 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
               <p className="text-xs text-blue-700 dark:text-blue-300 line-clamp-2 leading-snug mb-1">
                 {stations.find((s) => s.id === closestId)?.name}
               </p>
-              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                {formatDistanceShort(stations.find((s) => s.id === closestId)?.distance ?? 0)}
-              </p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                  {formatDistanceShort(stations.find((s) => s.id === closestId)?.distance ?? 0)}
+                </p>
+                {stations.find((s) => s.id === closestId)?.prices[fuelType] != null && (
+                  <p className="text-sm text-blue-500 dark:text-blue-400">
+                    ${stations.find((s) => s.id === closestId)?.prices[fuelType]?.toFixed(2)}
+                  </p>
+                )}
+              </div>
             </button>
           )}
         </div>

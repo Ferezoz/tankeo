@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import { getDirectionsUrl, useMapApp } from "./DirectionsButton";
 import L from "leaflet";
 import type { Station, FuelType } from "@/app/lib/stations";
 import { formatDistance } from "@/app/lib/distance";
@@ -126,6 +127,7 @@ function RecenterButton({ userLat, userLng, onRecenter }: { userLat: number; use
 
 export default function Map({ userLat, userLng, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter }: MapProps) {
   const markerRefs = useRef<Record<string, L.Marker>>({});
+  const preferred = useMapApp();
 
   const withPrice = stations.filter((s) => s.prices[fuelType] != null);
   const cheapestId = withPrice.length > 0
@@ -167,15 +169,23 @@ export default function Map({ userLat, userLng, stations, fuelType, selectedId, 
             ref={(ref) => { if (ref) markerRefs.current[station.id] = ref; }}
             eventHandlers={{ click: () => onSelectStation(station.id) }}
           >
-            <Popup>
-              <div className="text-sm">
-                <strong className="block mb-1">{station.name}</strong>
-                {price != null && (
-                  <div className="text-green-700 font-bold">${price.toFixed(2)} / L</div>
-                )}
-                <div className="text-gray-500 text-xs mt-0.5">{formatDistance(station.distance)}</div>
-                {isCheapest && <div className="mt-1 text-xs text-green-600 font-semibold">💰 Más barata del área</div>}
-                {isClosest && <div className="mt-1 text-xs text-blue-600 font-semibold">📍 Más cercana del área</div>}
+            <Popup className="compact-popup">
+              <div style={{ minWidth: 140 }}>
+                <strong className="block text-xs leading-snug mb-1">{station.name}</strong>
+                <div className="flex items-center gap-2">
+                  {price != null && <span className="text-green-700 font-bold text-sm">${price.toFixed(2)}</span>}
+                  <span className="text-gray-400 text-xs">{formatDistance(station.distance)}</span>
+                </div>
+                {isCheapest && <div className="text-xs text-green-600 font-medium mt-0.5">💰 Más barata</div>}
+                {isClosest && <div className="text-xs text-blue-600 font-medium mt-0.5">📍 Más cercana</div>}
+                <a
+                  href={getDirectionsUrl(preferred, station.lat, station.lng)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 block text-center text-xs border border-gray-300 hover:bg-gray-100 text-gray-600 px-2 py-1 rounded transition-colors"
+                >
+                  → Cómo llegar
+                </a>
               </div>
             </Popup>
           </Marker>

@@ -11,9 +11,10 @@ Next.js 16 app (App Router, React 19, TypeScript, Tailwind v4, pnpm) that shows 
 5. Summary tiles for cheapest and closest stations at the top of the list
 6. Fuel type selector: Magna, Premium, Diesel
 7. "Buscar en esta zona" button appears when panning the map — re-fetches for the new center
-8. Re-center button returns to GPS location
-9. "Cómo llegar" opens preferred navigation app (Google Maps / Apple Maps / Waze — saved in localStorage)
-10. Light/dark theme follows system preference
+8. Re-center button (◎) returns map and results to GPS location
+9. "Cómo llegar" opens preferred navigation app (Google Maps / Apple Maps / Waze — saved in localStorage); also available in map marker popups
+10. Map marker popups are compact: name, price, distance, "Cómo llegar" link
+11. Light/dark theme follows system preference
 
 ## Data source
 

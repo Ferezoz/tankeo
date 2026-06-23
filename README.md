@@ -8,7 +8,7 @@ Find the nearest and cheapest gas stations in Mexico using your current location
 - Sort stations by price or distance
 - Filter by Magna, Premium, or Diesel
 - "Buscar en esta zona" — pan the map and search a new area
-- "Cómo llegar" — opens Google Maps, Apple Maps, or Waze (remembers your preference)
+- "Cómo llegar" — opens Google Maps, Apple Maps, or Waze (remembers your preference); available on each card and in map popups
 - Light/dark theme following system preference
 - Fully responsive — desktop and mobile
 
