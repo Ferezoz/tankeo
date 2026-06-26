@@ -8,6 +8,7 @@ import MapWrapper from "@/app/components/MapWrapper";
 import { MapAppPicker } from "@/app/components/DirectionsButton";
 
 type GeoState =
+  | { status: "checking" }
   | { status: "idle" }
   | { status: "requesting" }
   | { status: "granted"; lat: number; lng: number }
@@ -23,7 +24,7 @@ const FUEL_TYPES: FuelType[] = ["magna", "premium", "diesel"];
 const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: true, timeout: 10000 };
 
 export default function Home() {
-  const [geo, setGeo] = useState<GeoState>({ status: "idle" });
+  const [geo, setGeo] = useState<GeoState>({ status: "checking" });
   const [fuelType, setFuelType] = useState<FuelType>("magna");
   const [fetchState, setFetchState] = useState<FetchState>({ status: "idle" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -38,8 +39,26 @@ export default function Home() {
   const requestLocation = useCallback(() => {
     setGeo({ status: "requesting" });
     navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        localStorage.setItem("locationGranted", "1");
+        setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => {
+        localStorage.removeItem("locationGranted");
+        setGeo({ status: "denied" });
+      },
+      GEO_OPTIONS
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation || !localStorage.getItem("locationGranted")) {
+      setGeo({ status: "idle" });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
       (pos) => setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setGeo({ status: "denied" }),
+      () => { localStorage.removeItem("locationGranted"); setGeo({ status: "idle" }); },
       GEO_OPTIONS
     );
   }, []);
@@ -62,6 +81,12 @@ export default function Home() {
       })
       .catch((err) => setFetchState({ status: "error", message: String(err) }));
   }, [geo, fuelType, searchCenter]);
+
+  if (geo.status === "checking") return (
+    <div className="flex items-center justify-center min-h-[100dvh]">
+      <div className="w-8 h-8 border-2 border-gray-300 dark:border-white/40 border-t-transparent dark:border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
   // --- Landing screen (idle, requesting, denied) ---
   if (geo.status !== "granted") {
