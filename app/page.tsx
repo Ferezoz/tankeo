@@ -75,7 +75,7 @@ export default function Home() {
   if (geo.status !== "granted") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[100dvh] gap-6 px-4 text-center">
-        <img src="/icon.png" alt="Gasolineras MX" className="w-20 h-20 rounded-2xl shadow-lg" />
+        <div className="w-20 h-20 rounded-2xl bg-green-600 flex items-center justify-center text-4xl shadow-lg">⛽</div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gasolineras MX</h1>
         <p className="text-gray-500 dark:text-gray-400 max-w-sm">
           Encuentra las gasolineras más cercanas y baratas en tu área.
