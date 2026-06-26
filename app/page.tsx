@@ -21,6 +21,7 @@ type FetchState =
   | { status: "error"; message: string };
 
 const FUEL_TYPES: FuelType[] = ["magna", "premium", "diesel"];
+const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: true, timeout: 10000 };
 
 export default function Home() {
   const [geo, setGeo] = useState<GeoState>({ status: "checking" });
@@ -40,30 +41,27 @@ export default function Home() {
     navigator.geolocation.getCurrentPosition(
       (pos) => setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => setGeo({ status: "denied" }),
-      { enableHighAccuracy: true, timeout: 10000 }
+      GEO_OPTIONS
     );
   }, []);
 
-  // Check permission state before first render to avoid landing screen flash
+  // Skip landing screen if permission already granted
   useEffect(() => {
     if (!navigator.geolocation) { setGeo({ status: "idle" }); return; }
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: "geolocation" }).then((result) => {
-        if (result.state === "granted") {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            () => setGeo({ status: "idle" }),
-            { enableHighAccuracy: true, timeout: 10000 }
-          );
-        } else if (result.state === "denied") {
-          setGeo({ status: "denied" });
-        } else {
-          setGeo({ status: "idle" });
-        }
-      });
-    } else {
-      setGeo({ status: "idle" });
-    }
+    if (!navigator.permissions) { setGeo({ status: "idle" }); return; }
+    navigator.permissions.query({ name: "geolocation" }).then((result) => {
+      if (result.state === "granted") {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => setGeo({ status: "idle" }),
+          GEO_OPTIONS
+        );
+      } else if (result.state === "denied") {
+        setGeo({ status: "denied" });
+      } else {
+        setGeo({ status: "idle" });
+      }
+    });
   }, []);
 
   // Fetch stations when location changes
