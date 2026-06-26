@@ -91,13 +91,13 @@ export default function Home() {
         {geo.status === "denied" && (
           <div className="flex flex-col items-center gap-3">
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-              El permiso de ubicación fue bloqueado.
+              Necesitamos acceso a tu ubicación para mostrarte las gasolineras más cercanas.
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500 max-w-xs">
-              En Safari, toca <strong>AA</strong> en la barra de dirección → Ajustes del sitio web → Ubicación → Permitir.
+              Asegúrate de dar permiso en los ajustes de tu dispositivo o navegador.
             </p>
             <button
-              onClick={requestLocation}
+              onClick={() => window.location.reload()}
               className="px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-xl transition-colors cursor-pointer"
             >
               Intentar de nuevo
