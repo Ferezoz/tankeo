@@ -39,29 +39,34 @@ export default function Home() {
   const requestLocation = useCallback(() => {
     setGeo({ status: "requesting" });
     navigator.geolocation.getCurrentPosition(
-      (pos) => setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setGeo({ status: "denied" }),
+      (pos) => {
+        localStorage.setItem("locationGranted", "1");
+        setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => {
+        localStorage.removeItem("locationGranted");
+        setGeo({ status: "denied" });
+      },
       GEO_OPTIONS
     );
   }, []);
 
-  // Skip landing screen if permission already granted
+  // Skip landing screen if permission was previously granted
   useEffect(() => {
-    if (!navigator.geolocation) { setGeo({ status: "idle" }); return; }
-    if (!navigator.permissions) { setGeo({ status: "idle" }); return; }
-    navigator.permissions.query({ name: "geolocation" }).then((result) => {
-      if (result.state === "granted") {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => setGeo({ status: "idle" }),
-          GEO_OPTIONS
-        );
-      } else if (result.state === "denied") {
-        setGeo({ status: "denied" });
-      } else {
+    if (!navigator.geolocation || !localStorage.getItem("locationGranted")) {
+      setGeo({ status: "idle" });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      (err) => {
+        if (err.code === 1) localStorage.removeItem("locationGranted");
         setGeo({ status: "idle" });
-      }
-    }).catch(() => setGeo({ status: "idle" }));
+      },
+      GEO_OPTIONS
+    );
   }, []);
 
   // Fetch stations when location changes
