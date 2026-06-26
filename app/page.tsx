@@ -163,7 +163,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-        <div className="flex-1 overflow-hidden flex flex-col p-3">
+        <div className="flex-1 overflow-hidden flex flex-col px-4 py-3">
           {fetchState.status === "error" ? (
             <div className="flex flex-col items-center justify-center h-full text-center gap-3 text-gray-400">
               <p className="text-3xl">⚠️</p>
