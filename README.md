@@ -1,6 +1,6 @@
-# Gasolineras MX ⛽
+# Tankeo ⛽
 
-Find the nearest and cheapest gas stations in Mexico using your current location. Works as a PWA — installable on iOS via "Add to Home Screen".
+Find the nearest and cheapest gas stations in Mexico using your current location. Live at [tankeo.mx](https://tankeo.mx). Works as a PWA — installable on iOS via "Add to Home Screen".
 
 ## Features
 
