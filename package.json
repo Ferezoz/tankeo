@@ -1,5 +1,5 @@
 {
-  "name": "gasolineras",
+  "name": "tankeo",
   "private": true,
   "scripts": {
     "dev": "DOTENV_PRIVATE_KEY=${DOTENV_PRIVATE_KEY:-$(bws secret get 4378f83f-e685-480a-9a5d-b472007a713d | jq -r '.value')} dotenvx run -- next dev --turbo",

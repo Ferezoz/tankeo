@@ -64,7 +64,7 @@ Goal: build organic traffic engine and understand user behavior.
 - [ ] Submit updated sitemap to Google Search Console
 
 ### Social Presence
-- [ ] Create a Twitter/X account @gasolinerasmx
+- [ ] Create a Twitter/X account @tankeomx
 - [ ] Post daily: "⛽ Gasolina más barata en CDMX hoy: $XX.XX en [Station Name]" — pull from CRE data manually or automate
 - [ ] Create Instagram account — post price comparison graphics weekly
 - [ ] Post 3 TikToks/Reels showing the app in use — "Así encuentro la gasolina más barata"
