@@ -58,10 +58,10 @@ Goal: build organic traffic engine and understand user behavior.
 - [ ] Review Vercel Analytics weekly — top referrers, top cities, mobile vs desktop split
 
 ### SEO — City Landing Pages
-- [ ] Add `/cdmx` — "Gasolineras más baratas en CDMX"
-- [ ] Add `/guadalajara`
-- [ ] Add `/monterrey`
-- [ ] Add `/puebla`
+- [ ] Add `/gasolineras/cdmx` — "Gasolineras más baratas en CDMX"
+- [ ] Add `/gasolineras/guadalajara`
+- [ ] Add `/gasolineras/monterrey`
+- [ ] Add `/gasolineras/puebla`
 - [ ] Add structured data (JSON-LD) for each city page
 - [ ] Submit updated sitemap to Google Search Console
 
