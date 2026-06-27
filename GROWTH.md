@@ -20,7 +20,7 @@ Goal: get real humans using it and get first feedback.
 
 ### Domain & Branding
 - [x] Register **Tankeo.mx**
-- [x] Point Tankeo.mx to Vercel deployment
+- [ ] Point Tankeo.mx to Vercel deployment (add domain in Vercel project settings, then add DNS records in Cloudflare)
 - [x] Update app title and metadata to "Tankeo"
 - [x] Rename GitHub repo to "tankeo"
 - [x] Rename Vercel project to "tankeo"
