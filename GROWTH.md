@@ -5,6 +5,18 @@
 - Real-time CRE data, mobile-first, works as PWA
 - Vercel Analytics enabled (pageviews + speed insights)
 - No monetization, no user accounts, no ads
+- Currently deployed at Vercel URL (temporary)
+
+## Domain & Branding Strategy
+- **Now**: Register `GasolinaBarata.mx` — keyword domain, ranks fast on Google with no marketing budget
+- **Phase 3-4**: Register `Tankeo.mx` — brand name, scalable beyond gas prices
+- **Migration**: 301 redirect GasolinaBarata.mx → Tankeo.mx + Google Search Console change of address tool (Google transfers most SEO authority)
+
+### Action
+- [ ] Register `GasolinaBarata.mx` on Namecheap or GoDaddy (~$200-400 MXN/year)
+- [ ] Point domain to Vercel deployment
+- [ ] Update app title/metadata to "GasolinaBarata"
+- [ ] Register `Tankeo.mx` now to reserve it (cheap, ~$200 MXN/year) even if not using it yet
 
 ---
 
