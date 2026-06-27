@@ -135,12 +135,12 @@ export default function Home() {
       {/* LEFT COLUMN: title + map */}
       <div className="flex flex-col h-[45dvh] md:h-auto md:flex-1 overflow-hidden">
         <div className="md:hidden safe-top shrink-0 flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-gray-800">
-          <span className="text-xl">⛽</span>
+          <img src="/apple-icon" alt="Tankeo" className="w-7 h-7 rounded-lg" />
           <h1 className="text-base font-bold text-gray-900 dark:text-white tracking-tight mr-auto">Tankeo</h1>
           <MapAppPicker />
         </div>
         <div className="safe-top hidden md:flex shrink-0 items-center gap-2 px-4 h-[52px] border-b border-gray-200 dark:border-gray-800">
-          <span className="text-xl">⛽</span>
+          <img src="/apple-icon" alt="Tankeo" className="w-7 h-7 rounded-lg" />
           <h1 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Tankeo</h1>
         </div>
         <div className="flex-1 p-3">
