@@ -17,12 +17,14 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.51.1",
+    "@types/leaflet": "^1.9.14",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "leaflet": "^1.9.4",
     "next": "16.2.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-leaflet": "^5.0.0",
-    "@types/leaflet": "^1.9.14"
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.0.0",
