@@ -66,7 +66,7 @@ Open http://localhost:3000 — it renders immediately with the Ciudad de México
 
 ## Deploy
 
-Push to `main` — Vercel auto-deploys on every push. No environment variables needed.
+Work happens on the `dev` branch, merged into `main` via PR. Vercel auto-deploys on every push: `main` deploys to production (tankeo.mx), other branches (including `dev`) get preview deployments. No environment variables needed.
 
 ## Architecture decisions
 
