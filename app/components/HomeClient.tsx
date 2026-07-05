@@ -25,6 +25,10 @@ const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: true, timeout: 10000 
 // Cell/Wi-Fi based, not a full GPS satellite lock — resolves in ~1s instead of
 // potentially timing out on a cold GPS start. Precise enough for "nearby stations".
 const SILENT_GEO_OPTIONS: PositionOptions = { enableHighAccuracy: false, timeout: 8000 };
+// navigator.permissions.query for geolocation is unreliable on iOS Safari (can
+// report the wrong status even when really granted) — this flag is a more
+// trustworthy signal there, set once any request actually succeeds.
+const LOCATION_GRANTED_KEY = "tankeo-location-granted";
 
 export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter }) {
   const [geo, setGeo] = useState<GeoState>({ status: "idle" });
@@ -46,6 +50,7 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
       (pos) => {
         setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
         setSearchCenter(null);
+        try { localStorage.setItem(LOCATION_GRANTED_KEY, "true"); } catch {}
       },
       () => setGeo({ status: "denied" }),
       GEO_OPTIONS
@@ -54,21 +59,34 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
 
   // Checking permission status never prompts — if a prior visit already granted
   // it, upgrade to precise location immediately instead of waiting for a tap on ◎.
-  // Unsupported/unreliable (iOS) just silently no-ops, leaving the default center.
   useEffect(() => {
+    const attemptSilent = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setSearchCenter(null);
+          try { localStorage.setItem(LOCATION_GRANTED_KEY, "true"); } catch {}
+        },
+        () => {}, // silent — the ◎ button remains available as a manual, high-accuracy retry
+        SILENT_GEO_OPTIONS
+      );
+    };
+
+    let grantedBefore = false;
+    try { grantedBefore = localStorage.getItem(LOCATION_GRANTED_KEY) === "true"; } catch {}
+
+    if (grantedBefore) {
+      attemptSilent();
+      return;
+    }
+
+    // Fallback for browsers where the flag isn't set yet (first-ever visit on this
+    // device where Permissions API happens to be reliable, e.g. desktop/Android).
     if (!navigator.permissions?.query) return;
     navigator.permissions
       .query({ name: "geolocation" })
       .then((status) => {
-        if (status.state !== "granted") return;
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
-            setSearchCenter(null);
-          },
-          () => {}, // silent — the ◎ button remains available as a manual, high-accuracy retry
-          SILENT_GEO_OPTIONS
-        );
+        if (status.state === "granted") attemptSilent();
       })
       .catch(() => {});
   }, []);
