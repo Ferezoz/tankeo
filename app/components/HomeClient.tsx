@@ -74,20 +74,32 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
     let grantedBefore = false;
     try { grantedBefore = localStorage.getItem(LOCATION_GRANTED_KEY) === "true"; } catch {}
 
-    if (grantedBefore) {
-      attemptSilent();
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+    if (!navigator.permissions?.query) {
+      // No Permissions API at all — the flag is the only signal we have.
+      if (grantedBefore) attemptSilent();
       return;
     }
 
-    // Fallback for browsers where the flag isn't set yet (first-ever visit on this
-    // device where Permissions API happens to be reliable, e.g. desktop/Android).
-    if (!navigator.permissions?.query) return;
     navigator.permissions
       .query({ name: "geolocation" })
       .then((status) => {
-        if (status.state === "granted") attemptSilent();
+        if (status.state === "granted") {
+          attemptSilent();
+        } else if (grantedBefore && isIOS) {
+          // iOS Safari can misreport "prompt"/"denied" even when really still
+          // granted — trust our own record there instead of a real reset, since
+          // there's no reliable way to tell the two apart on this platform.
+          attemptSilent();
+        }
+        // Otherwise: a non-iOS browser (where this API is trustworthy) says the
+        // permission genuinely isn't granted — respect that and don't attempt,
+        // so a real reset never triggers an unexpected prompt on load.
       })
-      .catch(() => {});
+      .catch(() => {
+        if (grantedBefore) attemptSilent();
+      });
   }, []);
 
   // "Home" location: precise GPS once granted, otherwise the IP-based city center
