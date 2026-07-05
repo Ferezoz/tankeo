@@ -1,10 +1,11 @@
 # Tankeo ⛽
 
-Find the nearest and cheapest gas stations in Mexico using your current location. Live at [tankeo.mx](https://tankeo.mx). Works as a PWA — installable on iOS via "Add to Home Screen".
+Find the nearest and cheapest gas stations in Mexico. Live at [tankeo.mx](https://tankeo.mx). Works as a PWA — installable on iOS via "Add to Home Screen".
 
 ## Features
 
-- Interactive map with price labels on markers (green = cheapest, blue = closest)
+- Loads instantly with real nearby stations — no location permission gate. Defaults to your city via IP geolocation (Ciudad de México if outside Mexico); tap the ◎ button to upgrade to your precise GPS location
+- Interactive map with price labels on markers (green = cheapest, purple = closest, white = selected) plus a pulsing blue dot for your precise location
 - Sort stations by price or distance
 - Filter by Magna, Premium, or Diesel
 - "Buscar en esta zona" — pan the map and search a new area
@@ -19,7 +20,7 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000 and grant location permission when prompted.
+Open http://localhost:3000 — it renders immediately with a default city (Ciudad de México locally). Tap ◎ to grant precise location.
 
 ## Deploy
 

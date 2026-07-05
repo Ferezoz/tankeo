@@ -18,6 +18,11 @@ const Map = dynamic(() => import("./Map"), {
 interface MapWrapperProps {
   userLat: number;
   userLng: number;
+  activeLat: number;
+  activeLng: number;
+  hasPrecise: boolean;
+  city: string;
+  requestingLocation: boolean;
   stations: Station[];
   fuelType: FuelType;
   selectedId: string | null;
@@ -25,6 +30,7 @@ interface MapWrapperProps {
   onSelectStation: (id: string) => void;
   onSearchHere: (lat: number, lng: number) => void;
   onRecenter: () => void;
+  onRequestLocation: () => void;
 }
 
 export default function MapWrapper(props: MapWrapperProps) {

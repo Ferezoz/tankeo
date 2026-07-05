@@ -44,7 +44,7 @@ export default function StationCard({
               </span>
             )}
             {isClosest && (
-              <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/70 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/70 dark:text-purple-300 px-2 py-0.5 rounded-full font-medium">
                 📍 Más cercana
               </span>
             )}

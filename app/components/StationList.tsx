@@ -57,7 +57,7 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
         <button
           onClick={() => setSortMode("distance")}
           className={`px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer ${
-            sortMode === "distance" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            sortMode === "distance" ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           }`}
         >
           📍 Distancia
@@ -85,18 +85,18 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
           {closestId && (
             <button
               onClick={() => onSelect(closestId)}
-              className="bg-blue-50 border border-blue-200 dark:bg-blue-950/50 dark:border-blue-800 rounded-lg p-3 text-left hover:bg-blue-100 dark:hover:bg-blue-950/80 transition-colors cursor-pointer"
+              className="bg-purple-50 border border-purple-200 dark:bg-purple-950/50 dark:border-purple-800 rounded-lg p-3 text-left hover:bg-purple-100 dark:hover:bg-purple-950/80 transition-colors cursor-pointer"
             >
-              <p className="text-xs text-blue-600 dark:text-blue-500 mb-1">📍 Más cercana</p>
-              <p className="text-xs text-blue-700 dark:text-blue-300 line-clamp-2 leading-snug mb-1">
+              <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">📍 Más cercana</p>
+              <p className="text-xs text-purple-700 dark:text-purple-300 line-clamp-2 leading-snug mb-1">
                 {stations.find((s) => s.id === closestId)?.name}
               </p>
               <div className="flex items-baseline gap-2">
-                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
                   {formatDistanceShort(stations.find((s) => s.id === closestId)?.distance ?? 0)}
                 </p>
                 {stations.find((s) => s.id === closestId)?.prices[fuelType] != null && (
-                  <p className="text-sm text-blue-500 dark:text-blue-400">
+                  <p className="text-sm text-purple-500 dark:text-purple-400">
                     ${stations.find((s) => s.id === closestId)?.prices[fuelType]?.toFixed(2)}
                   </p>
                 )}

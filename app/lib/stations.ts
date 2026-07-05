@@ -21,9 +21,3 @@ export const FUEL_LABELS: Record<FuelType, string> = {
   premium: "Premium",
   diesel: "Diesel",
 };
-
-export const FUEL_COLORS: Record<FuelType, string> = {
-  magna: "text-green-400",
-  premium: "text-yellow-400",
-  diesel: "text-blue-400",
-};

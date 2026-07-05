@@ -16,6 +16,10 @@ html, body {
   overflow: hidden;
 }
 
-/* Safe area insets for iOS standalone mode (notch / Dynamic Island) */
+/* Safe area insets for iOS standalone mode (notch / Dynamic Island). */
 .safe-top { padding-top: env(safe-area-inset-top); }
-.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Same as .safe-top, but adds to the mobile header's own 8px (py-2) baseline
+   instead of replacing it — keeps top/bottom symmetric with no real inset,
+   and simply adds extra room on top of that baseline where a notch exists. */
+.safe-top-header { padding-top: calc(env(safe-area-inset-top) + 8px); }
