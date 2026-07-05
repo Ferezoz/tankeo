@@ -97,8 +97,11 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
   const hasPrecise = geo.status === "granted";
   const fetchCenter = searchCenter ?? { lat: homeLat, lng: homeLng };
 
-  // Fetch stations whenever the effective center or fuel type changes
+  // Fetch stations whenever the effective center or fuel type changes. Ignores
+  // stale responses — e.g. if the initial IP-based fetch resolves after a later
+  // one triggered by a GPS upgrade, it must not overwrite the newer, correct data.
   useEffect(() => {
+    let ignore = false;
     setFetchState({ status: "loading" });
     setSelectedId(null);
     const url = new URL("/api/stations", window.location.origin);
@@ -108,9 +111,14 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
     fetch(url.toString())
       .then((r) => r.json())
       .then((data: { stations: Station[]; error?: string }) => {
+        if (ignore) return;
         setFetchState({ status: "done", stations: data.stations ?? [] });
       })
-      .catch((err) => setFetchState({ status: "error", message: String(err) }));
+      .catch((err) => {
+        if (ignore) return;
+        setFetchState({ status: "error", message: String(err) });
+      });
+    return () => { ignore = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeLat, homeLng, searchCenter, fuelType]);
 
