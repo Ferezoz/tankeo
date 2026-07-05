@@ -69,6 +69,39 @@ function parsePrices(xml: string): Map<string, PriceEntry> {
   return map;
 }
 
+// Next.js's built-in fetch cache silently refuses to store responses over 2MB
+// (the places feed alone is ~4MB), so `next: { revalidate }` never actually
+// cached anything — every request re-fetched and re-parsed both feeds from
+// scratch. This module-level cache stores the already-parsed (much smaller)
+// data instead, with a manual 1-hour TTL. It persists only for the lifetime of
+// a warm serverless instance, which is good enough at current traffic; a
+// shared store (Vercel KV + a scheduled refresh) would be the proper fix if
+// cold starts become frequent enough to matter — see GROWTH.md.
+const CACHE_TTL_MS = 60 * 60 * 1000;
+let cache: { places: Map<string, PlaceEntry>; prices: Map<string, PriceEntry>; fetchedAt: number } | null = null;
+
+async function getStationsData(): Promise<{ places: Map<string, PlaceEntry>; prices: Map<string, PriceEntry> }> {
+  if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
+    return cache;
+  }
+
+  try {
+    const [placesRes, pricesRes] = await Promise.all([fetch(PLACES_URL), fetch(PRICES_URL)]);
+
+    if (!placesRes.ok) throw new Error(`places responded ${placesRes.status}`);
+    if (!pricesRes.ok) throw new Error(`prices responded ${pricesRes.status}`);
+
+    const [placesXml, pricesXml] = await Promise.all([placesRes.text(), pricesRes.text()]);
+
+    cache = { places: parsePlaces(placesXml), prices: parsePrices(pricesXml), fetchedAt: Date.now() };
+    return cache;
+  } catch (err) {
+    // CRE's feeds temporarily down — serve stale data rather than fail outright.
+    if (cache) return cache;
+    throw err;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const lat = parseFloat(searchParams.get("lat") ?? "");
@@ -80,18 +113,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [placesRes, pricesRes] = await Promise.all([
-      fetch(PLACES_URL, { next: { revalidate: 3600 } }),
-      fetch(PRICES_URL, { next: { revalidate: 3600 } }),
-    ]);
-
-    if (!placesRes.ok) throw new Error(`places responded ${placesRes.status}`);
-    if (!pricesRes.ok) throw new Error(`prices responded ${pricesRes.status}`);
-
-    const [placesXml, pricesXml] = await Promise.all([placesRes.text(), pricesRes.text()]);
-
-    const places = parsePlaces(placesXml);
-    const prices = parsePrices(pricesXml);
+    const { places, prices } = await getStationsData();
 
     // Map fuelType to price key
     const priceKey: Record<FuelType, keyof PriceEntry> = {

@@ -7,6 +7,9 @@
 - No monetization, no user accounts, no ads
 - Domain: tankeo.mx (registered, needs to be connected to Vercel)
 
+## Known Technical Debt
+- **CRE data caching**: `app/api/stations/route.ts` currently caches the parsed CRE feed data in-memory per serverless instance (1-hour manual TTL, falls back to stale data on fetch failure). This works fine at current traffic but resets on every cold start and isn't shared across instances/regions. If cold starts become frequent enough to cause noticeably slow requests (worth checking via Vercel Analytics/logs), move to a shared cache: a Vercel Cron Job that fetches+parses the feeds hourly and writes the result to Vercel KV (or Upstash Redis), with the API route just reading from KV — no CRE round-trip on the user-facing request path at all.
+
 ## Domain & Branding Strategy
 - **Phase 1**: Launch as **Tankeo.mx** — memorable, shareable, works for word-of-mouth seeding
 - **Phase 2**: Buy **GasolinaBarata.mx** if SEO data shows most traffic comes from Google searches — redirect to Tankeo.mx
