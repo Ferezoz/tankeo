@@ -15,7 +15,6 @@ type GeoState =
   | { status: "denied" };
 
 type FetchState =
-  | { status: "idle" }
   | { status: "loading" }
   | { status: "done"; stations: Station[] }
   | { status: "error"; message: string };
@@ -33,7 +32,7 @@ const LOCATION_GRANTED_KEY = "tankeo-location-granted";
 export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter }) {
   const [geo, setGeo] = useState<GeoState>({ status: "idle" });
   const [fuelType, setFuelType] = useState<FuelType>("magna");
-  const [fetchState, setFetchState] = useState<FetchState>({ status: "idle" });
+  const [fetchState, setFetchState] = useState<FetchState>({ status: "loading" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusKey, setFocusKey] = useState(0);
   const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null);
