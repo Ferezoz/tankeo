@@ -19,7 +19,7 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
 
   useEffect(() => {
     if (selectedId && cardRefs.current[selectedId]) {
-      cardRefs.current[selectedId].scrollIntoView({ behavior: "smooth", block: "nearest" });
+      cardRefs.current[selectedId].scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [selectedId]);
 
@@ -108,7 +108,7 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
 
       {/* List */}
       <div className="flex-1 relative min-h-0">
-        <div className="h-full overflow-y-auto overscroll-contain space-y-2">
+        <div className="h-full overflow-y-auto overscroll-contain space-y-2 pb-6">
 
         {stations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-600">
