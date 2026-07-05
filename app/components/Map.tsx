@@ -92,6 +92,15 @@ function SearchHereButton({ activeLat, activeLng, onSearchHere }: { activeLat: n
     },
   });
 
+  // The map is guaranteed to be moved to match activeLat/activeLng whenever it
+  // changes (via <Recenter> or the recenter button's own map.setView), so reset
+  // directly instead of trusting the async moveend event — that can fire once
+  // with a stale closure (still comparing against the *previous* active center)
+  // right as the center changes, wrongly latching this back to true.
+  useEffect(() => {
+    setMoved(false);
+  }, [activeLat, activeLng]);
+
   if (!moved) return null;
 
   return (
