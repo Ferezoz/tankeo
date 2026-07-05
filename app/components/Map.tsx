@@ -154,6 +154,7 @@ interface MapProps {
   activeLat: number;
   activeLng: number;
   hasPrecise: boolean;
+  locationDenied: boolean;
   city: string;
   requestingLocation: boolean;
   stations: Station[];
@@ -170,6 +171,7 @@ function RecenterButton({
   userLat,
   userLng,
   hasPrecise,
+  locationDenied,
   isAtGpsLocation,
   requesting,
   onRecenter,
@@ -178,6 +180,7 @@ function RecenterButton({
   userLat: number;
   userLng: number;
   hasPrecise: boolean;
+  locationDenied: boolean;
   isAtGpsLocation: boolean;
   requesting: boolean;
   onRecenter: () => void;
@@ -197,7 +200,7 @@ function RecenterButton({
 
   return (
     <div className="absolute bottom-8 right-2 z-[1000]">
-      {!hasPrecise && !requesting && (
+      {!hasPrecise && !requesting && !locationDenied && (
         <>
           <span className="absolute inset-0 rounded border-2 border-green-500 animate-ping [animation-duration:2.5s]" />
           <div className="absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-lg bg-white px-2 py-1 text-xs font-medium text-gray-900 shadow-lg">
@@ -206,11 +209,25 @@ function RecenterButton({
           </div>
         </>
       )}
+      {locationDenied && !requesting && (
+        <div className="absolute bottom-full right-0 mb-2 w-48 rounded-lg bg-white px-3 py-2 text-xs font-medium text-gray-900 shadow-lg">
+          Activa la ubicación en los ajustes de tu navegador o dispositivo
+          <div className="absolute -bottom-1 right-3 h-2 w-2 rotate-45 bg-white" />
+        </div>
+      )}
       <button
         onClick={handleClick}
-        title={hasPrecise ? "Mi ubicación" : requesting ? "Buscando ubicación..." : "Usar mi ubicación exacta"}
-        className={`relative w-8 h-8 bg-white hover:bg-gray-100 text-gray-700 rounded shadow-md flex items-center justify-center text-sm cursor-pointer border border-gray-300 transition-colors disabled:opacity-60 ${
-          !hasPrecise ? "ring-2 ring-green-500" : ""
+        title={
+          hasPrecise
+            ? "Mi ubicación"
+            : requesting
+            ? "Buscando ubicación..."
+            : locationDenied
+            ? "Ubicación bloqueada — actívala en ajustes"
+            : "Usar mi ubicación exacta"
+        }
+        className={`relative w-8 h-8 bg-white hover:bg-gray-100 text-gray-700 rounded shadow-md flex items-center justify-center text-sm cursor-pointer border transition-colors disabled:opacity-60 ${
+          locationDenied ? "border-gray-300 ring-2 ring-gray-300" : !hasPrecise ? "border-gray-300 ring-2 ring-green-500" : "border-gray-300"
         }`}
         disabled={requesting}
       >
@@ -229,7 +246,7 @@ function RecenterButton({
   );
 }
 
-export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
+export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const preferred = useMapApp();
   const [atHome, setAtHome] = useState(true);
@@ -275,6 +292,7 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
         userLat={userLat}
         userLng={userLng}
         hasPrecise={hasPrecise}
+        locationDenied={locationDenied}
         isAtGpsLocation={isAtGpsLocation}
         requesting={requestingLocation}
         onRecenter={onRecenter}

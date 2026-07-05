@@ -107,6 +107,7 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
   const homeLat = geo.status === "granted" ? geo.lat : initialCenter.lat;
   const homeLng = geo.status === "granted" ? geo.lng : initialCenter.lng;
   const hasPrecise = geo.status === "granted";
+  const locationDenied = geo.status === "denied";
   const fetchCenter = searchCenter ?? { lat: homeLat, lng: homeLng };
 
   // Fetch stations whenever the effective center or fuel type changes. Ignores
@@ -157,6 +158,7 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
             activeLat={fetchCenter.lat}
             activeLng={fetchCenter.lng}
             hasPrecise={hasPrecise}
+            locationDenied={locationDenied}
             city={initialCenter.city}
             requestingLocation={geo.status === "requesting"}
             stations={stations}
