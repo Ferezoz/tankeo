@@ -22,6 +22,9 @@ type FetchState =
 
 const FUEL_TYPES: FuelType[] = ["magna", "premium", "diesel"];
 const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: true, timeout: 10000 };
+// Cell/Wi-Fi based, not a full GPS satellite lock — resolves in ~1s instead of
+// potentially timing out on a cold GPS start. Precise enough for "nearby stations".
+const SILENT_GEO_OPTIONS: PositionOptions = { enableHighAccuracy: false, timeout: 8000 };
 
 export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter }) {
   const [geo, setGeo] = useState<GeoState>({ status: "idle" });
@@ -50,17 +53,25 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
   }, []);
 
   // Checking permission status never prompts — if a prior visit already granted
-  // it, upgrade to precise GPS immediately instead of waiting for a tap on ◎.
+  // it, upgrade to precise location immediately instead of waiting for a tap on ◎.
   // Unsupported/unreliable (iOS) just silently no-ops, leaving the default center.
   useEffect(() => {
     if (!navigator.permissions?.query) return;
     navigator.permissions
       .query({ name: "geolocation" })
       .then((status) => {
-        if (status.state === "granted") requestLocation();
+        if (status.state !== "granted") return;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setSearchCenter(null);
+          },
+          () => {}, // silent — the ◎ button remains available as a manual, high-accuracy retry
+          SILENT_GEO_OPTIONS
+        );
       })
       .catch(() => {});
-  }, [requestLocation]);
+  }, []);
 
   // "Home" location: precise GPS once granted, otherwise the IP-based city center
   // computed server-side — never gates rendering on a permission decision.
