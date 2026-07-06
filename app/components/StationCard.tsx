@@ -59,9 +59,6 @@ export default function StationCard({
               {diff != null && (
                 <p className="text-xs text-gray-400 font-medium">+${diff.toFixed(2)}</p>
               )}
-              {isCheapest && (
-                <p className="text-xs text-green-600 dark:text-green-500 font-medium">más barata</p>
-              )}
             </>
           ) : (
             <span className="text-sm text-gray-600">—</span>

@@ -267,8 +267,8 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
   }, [userLat, userLng]);
 
   const withPrice = stations.filter((s) => s.prices[fuelType] != null);
-  const cheapestId = withPrice.length > 0
-    ? withPrice.reduce((a, b) => (a.prices[fuelType] ?? Infinity) < (b.prices[fuelType] ?? Infinity) ? a : b).id
+  const cheapestPrice = withPrice.length > 0
+    ? Math.min(...withPrice.map((s) => s.prices[fuelType] as number))
     : null;
   const closestId = stations.length > 0 ? stations[0].id : null;
 
@@ -307,7 +307,7 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
 
       {stations.map((station) => {
         const price = station.prices[fuelType];
-        const isCheapest = station.id === cheapestId;
+        const isCheapest = price != null && cheapestPrice != null && price === cheapestPrice;
         const isClosest = station.id === closestId;
         const isSelected = station.id === selectedId;
 
