@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Station, FuelType } from "@/app/lib/stations";
 import { FUEL_LABELS } from "@/app/lib/stations";
 import type { GeoCenter } from "@/app/lib/geo";
 import StationList from "@/app/components/StationList";
 import MapWrapper from "@/app/components/MapWrapper";
 import { MapAppPicker } from "@/app/components/DirectionsButton";
+import PhoneHandoff from "@/app/components/PhoneHandoff";
 
 type GeoState =
   | { status: "idle" }
@@ -29,18 +30,39 @@ const SILENT_GEO_OPTIONS: PositionOptions = { enableHighAccuracy: false, timeout
 // trustworthy signal there, set once any request actually succeeds.
 const LOCATION_GRANTED_KEY = "tankeo-location-granted";
 
-export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter }) {
+interface HomeClientProps {
+  initialCenter: GeoCenter;
+  sharedLocation: { lat: number; lng: number } | null;
+  sharedStationId: string | null;
+}
+
+export default function HomeClient({ initialCenter, sharedLocation, sharedStationId }: HomeClientProps) {
   const [geo, setGeo] = useState<GeoState>({ status: "idle" });
   const [fuelType, setFuelType] = useState<FuelType>("magna");
   const [fetchState, setFetchState] = useState<FetchState>({ status: "loading" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusKey, setFocusKey] = useState(0);
-  const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(null);
+  // Seeded from a "send to phone" QR link — shows the same area the desktop
+  // user was looking at even before the phone has its own GPS fix.
+  const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number } | null>(sharedLocation);
 
   const selectStation = useCallback((id: string) => {
     setSelectedId(id);
     setFocusKey((k) => k + 1);
   }, []);
+
+  // Applied once the matching fetch actually completes (not seeded directly into
+  // initial state) — selectStation's focusKey bump is what makes the list/map
+  // scroll to and open the popup for it, and refs don't exist until real station
+  // data has rendered at least once.
+  const appliedSharedStation = useRef(false);
+  useEffect(() => {
+    if (appliedSharedStation.current || fetchState.status !== "done" || !sharedStationId) return;
+    appliedSharedStation.current = true;
+    if (fetchState.stations.some((s) => s.id === sharedStationId)) {
+      selectStation(sharedStationId);
+    }
+  }, [fetchState, sharedStationId, selectStation]);
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) { setGeo({ status: "denied" }); return; }
@@ -63,7 +85,9 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
-          setSearchCenter(null);
+          // Don't clobber a "send to phone" shared zone/station with the recipient's
+          // own GPS — only an explicit tap on ◎ (requestLocation) should override that.
+          if (!sharedLocation) setSearchCenter(null);
           try { localStorage.setItem(LOCATION_GRANTED_KEY, "true"); } catch {}
         },
         () => {}, // silent — the ◎ button remains available as a manual, high-accuracy retry
@@ -100,6 +124,7 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
       .catch(() => {
         if (grantedBefore) attemptSilent();
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // "Home" location: precise GPS once granted, otherwise the IP-based city center
@@ -149,7 +174,8 @@ export default function HomeClient({ initialCenter }: { initialCenter: GeoCenter
         </div>
         <div className="safe-top hidden md:flex shrink-0 items-center gap-2 px-4 h-[52px] border-b border-gray-200 dark:border-gray-800">
           <img src="/apple-icon" alt="Tankeo" className="w-7 h-7 rounded-lg" />
-          <h1 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">Tankeo</h1>
+          <h1 className="text-base font-bold text-gray-900 dark:text-white tracking-tight mr-auto">Tankeo</h1>
+          <PhoneHandoff lat={fetchCenter.lat} lng={fetchCenter.lng} stationId={selectedId} />
         </div>
         <div className="flex-1 p-3">
           <MapWrapper
