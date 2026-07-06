@@ -26,8 +26,10 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
   const withPrice = stations.filter((s) => s.prices[fuelType] != null);
   const withoutPrice = stations.filter((s) => s.prices[fuelType] == null);
 
+  // <= (not <) so a tie keeps the earlier (closer, since withPrice is
+  // distance-sorted) station rather than always switching to the later one.
   const cheapestId = withPrice.length > 0
-    ? withPrice.reduce((a, b) => (a.prices[fuelType] ?? Infinity) < (b.prices[fuelType] ?? Infinity) ? a : b).id
+    ? withPrice.reduce((a, b) => (a.prices[fuelType] ?? Infinity) <= (b.prices[fuelType] ?? Infinity) ? a : b).id
     : null;
   const cheapestPrice = cheapestId ? (stations.find((s) => s.id === cheapestId)?.prices[fuelType] ?? null) : null;
   const closestId = stations.length > 0 ? stations[0].id : null;
@@ -123,7 +125,7 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
                 <StationCard
                   station={station}
                   fuelType={fuelType}
-                  isCheapest={station.id === cheapestId}
+                  isCheapest={cheapestPrice != null && station.prices[fuelType] === cheapestPrice}
                   isClosest={station.id === closestId}
                   isSelected={station.id === selectedId}
                   cheapestPrice={cheapestPrice}
