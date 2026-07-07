@@ -249,8 +249,13 @@ function RecenterButton({
 export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const preferred = useMapApp();
-  const [atHome, setAtHome] = useState(true);
-  const [hasMovedOnce, setHasMovedOnce] = useState(false);
+  // <Recenter> targets activeLat/activeLng (home, unless a search/shared zone is
+  // active), so "at home" is really "is the active target the same as home" —
+  // computed directly rather than defaulted to true, otherwise a shared-zone deep
+  // link would flash the home city chip for a frame before correcting itself.
+  const isActiveHome = activeLat === userLat && activeLng === userLng;
+  const [atHome, setAtHome] = useState(isActiveHome);
+  const [hasMovedOnce, setHasMovedOnce] = useState(!isActiveHome);
   const isAtGpsLocation = hasPrecise && atHome;
 
   const handleHomeProximityChange = useCallback((newAtHome: boolean) => {
@@ -258,19 +263,22 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
     if (!newAtHome) setHasMovedOnce(true);
   }, []);
 
-  // <Recenter> always re-centers the map whenever home coordinates change, so we
-  // know synchronously we're at home — no need to wait on Leaflet's async moveend,
-  // which can fire with a stale closure (still comparing against the old home) and
-  // wrongly latch atHome to false.
+  // <Recenter> always re-centers the map whenever the active target changes, so we
+  // know synchronously whether we're at home — no need to wait on Leaflet's async
+  // moveend, which can fire with a stale closure (still comparing against the old
+  // target) and wrongly latch atHome.
   useEffect(() => {
-    setAtHome(true);
-  }, [userLat, userLng]);
+    handleHomeProximityChange(isActiveHome);
+  }, [isActiveHome, handleHomeProximityChange]);
 
   const withPrice = stations.filter((s) => s.prices[fuelType] != null);
   const cheapestPrice = withPrice.length > 0
     ? Math.min(...withPrice.map((s) => s.prices[fuelType] as number))
     : null;
-  const closestId = stations.length > 0 ? stations[0].id : null;
+  // Scoped to withPrice, same as cheapestPrice — a station with no price for this
+  // fuel type isn't a useful "closest" recommendation even if it's geographically
+  // nearest, since withPrice stays distance-sorted its first entry is still closest.
+  const closestId = withPrice.length > 0 ? withPrice[0].id : null;
 
   useEffect(() => {
     if (selectedId && markerRefs.current[selectedId]) {
@@ -279,12 +287,12 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
   }, [selectedId, focusKey]);
 
   return (
-    <MapContainer center={[userLat, userLng]} zoom={typeof window !== "undefined" && window.innerWidth < 768 ? 14 : 15} className="h-full w-full rounded-xl" style={{ background: "#1a1a2e" }}>
+    <MapContainer center={[activeLat, activeLng]} zoom={typeof window !== "undefined" && window.innerWidth < 768 ? 14 : 15} className="h-full w-full rounded-xl" style={{ background: "#1a1a2e" }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Recenter lat={userLat} lng={userLng} />
+      <Recenter lat={activeLat} lng={activeLng} />
       <HomeProximityTracker userLat={userLat} userLng={userLng} onChange={handleHomeProximityChange} />
       <SearchHereButton activeLat={activeLat} activeLng={activeLng} onSearchHere={onSearchHere} />
       {!hasPrecise && atHome && !hasMovedOnce && <CityChip city={city} />}
@@ -316,6 +324,7 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
             key={station.id}
             position={[station.lat, station.lng]}
             icon={createPriceIcon(price, isCheapest, isClosest, isSelected)}
+            zIndexOffset={isSelected ? 1000 : 0}
             ref={(ref) => { if (ref) markerRefs.current[station.id] = ref; }}
             eventHandlers={{ click: () => onSelectStation(station.id) }}
           >
