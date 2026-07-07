@@ -324,6 +324,7 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
             key={station.id}
             position={[station.lat, station.lng]}
             icon={createPriceIcon(price, isCheapest, isClosest, isSelected)}
+            zIndexOffset={isSelected ? 1000 : 0}
             ref={(ref) => { if (ref) markerRefs.current[station.id] = ref; }}
             eventHandlers={{ click: () => onSelectStation(station.id) }}
           >
