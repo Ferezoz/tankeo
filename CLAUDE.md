@@ -18,6 +18,7 @@ Next.js 16 app (App Router, React 19, TypeScript, Tailwind v4, pnpm) that shows 
 12. Map marker popups are compact: name, price, distance, "Cómo llegar" link
 13. Light/dark theme follows system preference
 14. Bottom fade gradient on station list hints at scrollability
+15. Desktop header has an "Enviar a tu celular" button (hidden on mobile) that shows a QR code encoding the current search center and selected station (if any) — scanning it on a phone opens the app pre-centered on that zone/station via URL query params (`?lat=&lng=&station=`)
 
 ## Data source
 
@@ -32,7 +33,7 @@ The API route at `/api/stations?lat=X&lng=Y&fuelType=magna` fetches both XMLs in
 
 ## Key files
 
-- `app/page.tsx` — server component; reads Vercel's IP geolocation headers via `next/headers`, passes the resolved default center to `HomeClient`
+- `app/page.tsx` — server component; reads Vercel's IP geolocation headers via `next/headers`, also reads `searchParams` (`lat`/`lng`/`station`) for the QR handoff deep link, passes both to `HomeClient`
 - `app/components/HomeClient.tsx` — the actual app: two-column layout, geolocation state machine, fuel type + search center state (client component)
 - `app/lib/geo.ts` — resolves the default map center from `x-vercel-ip-*` request headers; falls back to Ciudad de México outside Mexico or when headers are missing
 - `app/api/stations/route.ts` — fetches CRE XML feeds, parses, joins by `place_id`, filters by distance
@@ -41,6 +42,7 @@ The API route at `/api/stations?lat=X&lng=Y&fuelType=magna` fetches both XMLs in
 - `app/components/StationList.tsx` — sort toggle, summary tiles (cheapest + closest), scrollable card list with bottom fade
 - `app/components/StationCard.tsx` — price, distance, badges, "Cómo llegar" link
 - `app/components/DirectionsButton.tsx` — directions link + `MapAppPicker` modal for nav app preference
+- `app/components/PhoneHandoff.tsx` — desktop-only "Enviar a tu celular" button + QR code popover for the send-to-phone handoff
 - `app/lib/stations.ts` — `Station` type, `FuelType` type
 - `app/lib/distance.ts` — Haversine formula + distance formatter
 - `app/icon.tsx` — auto-generated favicon (32×32)
@@ -92,6 +94,13 @@ Work happens on the `dev` branch, merged into `main` via PR. Vercel auto-deploys
 - `!text-gray-600` (Tailwind `!important`) needed on Leaflet popup links — Leaflet CSS has higher specificity than regular Tailwind classes for anchor colors
 - `/apple-icon` (no extension) is the correct path for Next.js metadata-generated images — `/apple-icon.png` returns 404
 - pnpm is the package manager (not npm or yarn)
+- Send-to-phone QR (`PhoneHandoff.tsx`): encodes `window.location.origin` + `lat`/`lng`/`station` query params client-side via the `qrcode` package. On the receiving end, `sharedStationId` is only applied once the matching station fetch actually completes (guarded by a ref so it only fires once) — `selectStation`'s focusKey bump is what scrolls to/opens the popup for it, and marker refs don't exist until real station data has rendered
+- The silent GPS auto-upgrade (permission already granted from a prior visit) must never clobber a shared location from a QR link — it only clears `searchCenter` when there's no `sharedLocation`. Only an explicit tap on ◎ should override a shared zone/station with the recipient's own GPS position
+- Tapping ◎ (whether it triggers a fresh `requestLocation` call or the device already has a precise fix and just recenters via `onRecenter`) clears any shared-link query params via `history.replaceState` — otherwise reloading the page would re-seed `searchCenter` from the stale URL params and silently override the GPS choice just made. Both code paths call a shared `clearSharedLocationUrl` helper since the "already precise" recenter path never goes through `requestLocation`
+- The map's actual camera (`<Recenter>` and `MapContainer`'s initial `center`) follows `activeLat`/`activeLng` (the active search/fetch center), not `userLat`/`userLng` (home/GPS) — otherwise a shared zone from a QR link would never visually move the map there, since dragging manually was the only thing that ever made the camera match the fetch center before. `atHome` is derived by directly comparing `activeLat`/`activeLng` to `userLat`/`userLng` rather than assuming recenters always target home, which also fixes the city chip flashing the wrong city on a shared-zone link
+- `closestId` (in both `Map.tsx` and `StationList.tsx`) is scoped to stations with a price for the selected fuel type, same as `cheapestId` — otherwise a station with no price data could get the "Más cercana" badge and summary tile while showing "—", which isn't an actionable recommendation
+- Selected map markers get `zIndexOffset={1000}` — Leaflet stacks markers by vertical position/insertion order by default, so an overlapping selected marker could render underneath another and become hard to see or click
+- PWA link capture (opening a scanned QR link inside the installed "Add to Home Screen" app instead of the browser) isn't implemented: iOS has no mechanism for this at all (Home Screen web apps can't intercept external links), and Chrome's `capture_links` manifest field never reached stable/reliable support — not worth adding for an inconsistent, Android-only, best-effort gain
 
 ## Growth & Business
 

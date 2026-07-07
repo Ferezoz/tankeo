@@ -10,6 +10,7 @@ Find the nearest and cheapest gas stations in Mexico. Live at [tankeo.mx](https:
 - Filter by Magna, Premium, or Diesel
 - "Buscar en esta zona" — pan the map and search a new area
 - "Cómo llegar" — opens Google Maps, Apple Maps, or Waze (remembers your preference); available on each card and in map popups
+- "Enviar a tu celular" — desktop-only button that shows a QR code to send the current zone/station to your phone
 - Light/dark theme following system preference
 - Fully responsive — desktop and mobile
 
@@ -24,7 +25,7 @@ Open http://localhost:3000 — it renders immediately with a default city (Ciuda
 
 ## Deploy
 
-Push to `main` — Vercel auto-deploys. No environment variables needed.
+Work happens on the `dev` branch, merged into `main` via PR. Vercel auto-deploys on every push — `main` deploys to production, other branches get preview deployments. No environment variables needed.
 
 ## Data source
 
