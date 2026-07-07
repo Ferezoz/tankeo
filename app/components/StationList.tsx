@@ -32,7 +32,10 @@ export default function StationList({ stations, fuelType, selectedId, onSelect }
     ? withPrice.reduce((a, b) => (a.prices[fuelType] ?? Infinity) <= (b.prices[fuelType] ?? Infinity) ? a : b).id
     : null;
   const cheapestPrice = cheapestId ? (stations.find((s) => s.id === cheapestId)?.prices[fuelType] ?? null) : null;
-  const closestId = stations.length > 0 ? stations[0].id : null;
+  // Scoped to withPrice, same as cheapestId — a station with no price for this
+  // fuel type isn't a useful "closest" recommendation even if it's geographically
+  // nearest, since withPrice stays distance-sorted its first entry is still closest.
+  const closestId = withPrice.length > 0 ? withPrice[0].id : null;
 
   const sortedWithPrice = [...withPrice].sort((a, b) => {
     if (sortMode === "price") {

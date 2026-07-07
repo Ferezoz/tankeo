@@ -275,7 +275,10 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
   const cheapestPrice = withPrice.length > 0
     ? Math.min(...withPrice.map((s) => s.prices[fuelType] as number))
     : null;
-  const closestId = stations.length > 0 ? stations[0].id : null;
+  // Scoped to withPrice, same as cheapestPrice — a station with no price for this
+  // fuel type isn't a useful "closest" recommendation even if it's geographically
+  // nearest, since withPrice stays distance-sorted its first entry is still closest.
+  const closestId = withPrice.length > 0 ? withPrice[0].id : null;
 
   useEffect(() => {
     if (selectedId && markerRefs.current[selectedId]) {
