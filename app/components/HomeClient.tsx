@@ -72,11 +72,17 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
         setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
         setSearchCenter(null);
         try { localStorage.setItem(LOCATION_GRANTED_KEY, "true"); } catch {}
+        // An explicit GPS request supersedes a shared link — clear its params so a
+        // reload trusts this device's real location instead of re-seeding the old
+        // shared zone/station.
+        if (sharedLocation) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
       },
       () => setGeo({ status: "denied" }),
       GEO_OPTIONS
     );
-  }, []);
+  }, [sharedLocation]);
 
   // Checking permission status never prompts — if a prior visit already granted
   // it, upgrade to precise location immediately instead of waiting for a tap on ◎.
