@@ -64,6 +64,16 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
     }
   }, [fetchState, sharedStationId, selectStation]);
 
+  // An explicit recenter to home (whether it triggers a fresh GPS request or the
+  // device already has a precise fix) supersedes a shared link — clear its params
+  // so a reload trusts this device's own location instead of re-seeding the old
+  // shared zone/station.
+  const clearSharedLocationUrl = useCallback(() => {
+    if (sharedLocation) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [sharedLocation]);
+
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) { setGeo({ status: "denied" }); return; }
     setGeo({ status: "requesting" });
@@ -72,17 +82,17 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
         setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
         setSearchCenter(null);
         try { localStorage.setItem(LOCATION_GRANTED_KEY, "true"); } catch {}
-        // An explicit GPS request supersedes a shared link — clear its params so a
-        // reload trusts this device's real location instead of re-seeding the old
-        // shared zone/station.
-        if (sharedLocation) {
-          window.history.replaceState(null, "", window.location.pathname);
-        }
+        clearSharedLocationUrl();
       },
       () => setGeo({ status: "denied" }),
       GEO_OPTIONS
     );
-  }, [sharedLocation]);
+  }, [clearSharedLocationUrl]);
+
+  const handleRecenter = useCallback(() => {
+    setSearchCenter(null);
+    clearSharedLocationUrl();
+  }, [clearSharedLocationUrl]);
 
   // Checking permission status never prompts — if a prior visit already granted
   // it, upgrade to precise location immediately instead of waiting for a tap on ◎.
@@ -199,7 +209,7 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
             focusKey={focusKey}
             onSelectStation={selectStation}
             onSearchHere={(lat, lng) => setSearchCenter({ lat, lng })}
-            onRecenter={() => setSearchCenter(null)}
+            onRecenter={handleRecenter}
             onRequestLocation={requestLocation}
           />
         </div>
