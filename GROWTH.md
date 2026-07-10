@@ -8,7 +8,7 @@
 - Domain: tankeo.mx (registered, needs to be connected to Vercel)
 
 ## Known Technical Debt
-- **CRE data caching**: `app/api/stations/route.ts` currently caches the parsed CRE feed data in-memory per serverless instance (1-hour manual TTL, falls back to stale data on fetch failure). This works fine at current traffic but resets on every cold start and isn't shared across instances/regions. If cold starts become frequent enough to cause noticeably slow requests (worth checking via Vercel Analytics/logs), move to a shared cache: a Vercel Cron Job that fetches+parses the feeds hourly and writes the result to Vercel KV (or Upstash Redis), with the API route just reading from KV — no CRE round-trip on the user-facing request path at all.
+- ~~CRE data caching~~ — resolved: a daily Vercel Cron job (`/api/cron/refresh-stations`) now fetches+parses both CRE feeds and writes the result to Vercel Blob storage; `/api/stations` reads that instead of re-fetching CRE on every cold start (see CLAUDE.md's Architecture decisions). **Requires creating a Blob store in the Vercel dashboard and connecting it to the project** (auto-injects `BLOB_READ_WRITE_TOKEN`) — until that's done, the route transparently falls back to fetching CRE directly, same as before.
 
 ## Domain & Branding Strategy
 - **Phase 1**: Launch as **Tankeo.mx** — memorable, shareable, works for word-of-mouth seeding
