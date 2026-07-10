@@ -8,7 +8,7 @@
 - Domain: tankeo.mx (registered, needs to be connected to Vercel)
 
 ## Known Technical Debt
-- ~~CRE data caching~~ — resolved: a daily Vercel Cron job (`/api/cron/refresh-stations`) now fetches+parses both CRE feeds and writes the result to Vercel Blob storage; `/api/stations` reads that instead of re-fetching CRE on every cold start (see CLAUDE.md's Architecture decisions). **Requires creating a Blob store in the Vercel dashboard and connecting it to the project** (auto-injects `BLOB_READ_WRITE_TOKEN`) — until that's done, the route transparently falls back to fetching CRE directly, same as before.
+- ~~CRE data caching~~ — resolved: a daily Vercel Cron job (`/api/cron/refresh-stations`) now fetches+parses both CRE feeds and writes the result to Vercel Blob storage; `/api/stations` reads that instead of re-fetching CRE on every cold start (see CLAUDE.md's Architecture decisions). The `tankeo-stations` Blob store is created and connected to the project, confirmed working end-to-end (verified via the `x-stations-source: blob` response header on a fresh deployment instance).
 
 ## Domain & Branding Strategy
 - **Phase 1**: Launch as **Tankeo.mx** — memorable, shareable, works for word-of-mouth seeding

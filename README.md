@@ -25,7 +25,7 @@ Open http://localhost:3000 — it renders immediately with a default city (Ciuda
 
 ## Deploy
 
-Work happens on the `dev` branch, merged into `main` via PR. Vercel auto-deploys on every push — `main` deploys to production, other branches get preview deployments. No environment variables needed.
+Work happens on the `dev` branch, merged into `main` via PR. Vercel auto-deploys on every push — `main` deploys to production, other branches get preview deployments. Requires a Vercel Blob store created and connected to the project (auto-injects `BLOB_READ_WRITE_TOKEN`) for the daily data-refresh cron — see CLAUDE.md.
 
 ## Data source
 
@@ -36,7 +36,7 @@ Two public XML endpoints from CRE (Comisión Reguladora de Energía):
 | `.../publicaciones/places` | ~11,000 stations with name, permit ID, lat/lng |
 | `.../publicaciones/prices` | Current prices per station (regular, premium, diesel) |
 
-The API route at `/api/stations` fetches both in parallel, joins on `place_id`, filters to 10 km, and returns the 30 nearest stations. Responses are cached 1 hour server-side.
+A daily Vercel Cron job fetches+parses both feeds and stores the result in Vercel Blob storage. The `/api/stations` route reads that (falling back to fetching CRE directly if the blob is missing or stale), joins on `place_id`, filters to 10 km, and returns the 30 nearest stations.
 
 ## Tech stack
 
