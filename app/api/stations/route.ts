@@ -28,11 +28,16 @@ const CACHE_TTL_MS = 60 * 60 * 1000;
 // directly is a better fallback than serving it.
 const BLOB_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
-let cache: { data: StationsData; fetchedAt: number } | null = null;
+type StationsSource = "memory" | "blob" | "cre";
 
-async function getStationsData(): Promise<StationsData> {
+let cache: { data: StationsData; fetchedAt: number; source: StationsSource } | null = null;
+
+// Surfaced as an `x-stations-source` response header — cheap, permanent
+// visibility into which path actually served a request, so "is the blob
+// really being read" is answerable by looking, not by guessing.
+async function getStationsData(): Promise<{ data: StationsData; source: StationsSource }> {
   if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
-    return cache.data;
+    return { data: cache.data, source: "memory" };
   }
 
   try {
@@ -42,8 +47,8 @@ async function getStationsData(): Promise<StationsData> {
     const res = await fetch(blobInfo.url);
     if (!res.ok) throw new Error(`blob fetch responded ${res.status}`);
     const data: StationsData = await res.json();
-    cache = { data, fetchedAt: Date.now() };
-    return data;
+    cache = { data, fetchedAt: Date.now(), source: "blob" };
+    return { data, source: "blob" };
   } catch {
     // Blob missing (first deploy, before the cron has run once), too stale,
     // or unreadable — fall through to fetching CRE directly.
@@ -51,11 +56,11 @@ async function getStationsData(): Promise<StationsData> {
 
   try {
     const data = await fetchAndParseCreFeeds();
-    cache = { data, fetchedAt: Date.now() };
-    return data;
+    cache = { data, fetchedAt: Date.now(), source: "cre" };
+    return { data, source: "cre" };
   } catch (err) {
     // CRE's feeds temporarily down too — serve stale data rather than fail outright.
-    if (cache) return cache.data;
+    if (cache) return { data: cache.data, source: cache.source };
     throw err;
   }
 }
@@ -70,7 +75,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { places, prices } = await getStationsData();
+    const { data: { places, prices }, source } = await getStationsData();
 
     const stations: Station[] = [];
 
@@ -96,7 +101,10 @@ export async function GET(request: NextRequest) {
 
     stations.sort((a, b) => a.distance - b.distance);
 
-    return NextResponse.json({ stations: stations.slice(0, 30) });
+    return NextResponse.json(
+      { stations: stations.slice(0, 30) },
+      { headers: { "x-stations-source": source } }
+    );
   } catch (err) {
     console.error("Error fetching stations:", err);
     return NextResponse.json({ stations: [], error: String(err) });
