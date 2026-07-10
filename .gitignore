@@ -1,11 +1,5 @@
 # dependencies
 node_modules/
-.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/releases
-!.yarn/versions
 
 # testing
 /coverage
@@ -38,4 +32,6 @@ pnpm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code
 .claude/worktrees/
