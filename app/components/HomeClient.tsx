@@ -161,7 +161,6 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
     const url = new URL("/api/stations", window.location.origin);
     url.searchParams.set("lat", String(fetchCenter.lat));
     url.searchParams.set("lng", String(fetchCenter.lng));
-    url.searchParams.set("fuelType", fuelType);
     fetch(url.toString())
       .then((r) => r.json())
       .then((data: { stations: Station[]; error?: string }) => {
@@ -173,8 +172,11 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
         setFetchState({ status: "error", message: String(err) });
       });
     return () => { ignore = true; };
+    // fuelType intentionally excluded — station selection is purely
+    // distance-based, every station already carries all three fuel prices, so
+    // switching fuel tabs is a local re-render, not a re-fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [homeLat, homeLng, searchCenter, fuelType]);
+  }, [homeLat, homeLng, searchCenter]);
 
   const stations = fetchState.status === "done" ? fetchState.stations : [];
 
