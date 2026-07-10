@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/refresh-stations",
-      "schedule": "0 14 * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
