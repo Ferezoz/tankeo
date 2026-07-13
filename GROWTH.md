@@ -23,21 +23,21 @@ Goal: get real humans using it and get first feedback.
 
 ### Domain & Branding
 - [x] Register **Tankeo.mx**
-- [ ] Point Tankeo.mx to Vercel deployment (add domain in Vercel project settings, then add DNS records in Cloudflare)
+- [x] Point Tankeo.mx to Vercel deployment (add domain in Vercel project settings, then add DNS records in Cloudflare)
 - [x] Update app title and metadata to "Tankeo"
 - [x] Rename GitHub repo to "tankeo"
 - [x] Rename Vercel project to "tankeo"
 - [ ] Skip GasolinaBarata.mx for now — revisit in Phase 2 when SEO matters
 
 ### SEO Foundation (do now, pays off later)
-- [ ] Set up Google Search Console — search.google.com/search-console, add Tankeo.mx, submit sitemap
+- [x] Set up Google Search Console — search.google.com/search-console, add Tankeo.mx, submit sitemap
 - [ ] Do NOT build city pages yet — domain needs traffic and trust first, add in Phase 2
 
 ### Distribution (manual seeding)
 - [ ] Share in r/mexico and r/cdmx — post with screenshot showing cheapest gas near a popular area
 - [ ] Share in r/autos_mexico or similar car subreddits
 - [ ] Post in Facebook groups: "Conductores CDMX", "Automovilistas México", "Gasolina México"
-- [ ] Send to 10 friends/family who drive and ask them to share if useful
+- [x] Send to 10 friends/family who drive and ask them to share if useful
 - [ ] Post on your personal Twitter/X: "Hice una app para encontrar la gasolina más barata cerca de ti — tankeo.mx"
 - [ ] Submit to Product Hunt (pick a Tuesday–Thursday, prepare short description and screenshot)
 - [ ] Submit to Hacker News "Show HN" post
