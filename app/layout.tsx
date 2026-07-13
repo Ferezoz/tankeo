@@ -12,6 +12,20 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Tankeo",
   },
+  metadataBase: new URL("https://tankeo.mx"),
+  openGraph: {
+    title: "Tankeo — Gasolina barata cerca de ti",
+    description: "Encuentra las gasolineras más cercanas y baratas en México en segundos.",
+    url: "https://tankeo.mx",
+    siteName: "Tankeo",
+    locale: "es_MX",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tankeo — Gasolina barata cerca de ti",
+    description: "Encuentra las gasolineras más cercanas y baratas en México en segundos.",
+  },
 };
 
 export const viewport: Viewport = {
