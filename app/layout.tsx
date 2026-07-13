@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     title: "Tankeo",
   },
   metadataBase: new URL("https://tankeo.mx"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Tankeo — Gasolina barata cerca de ti",
     description: "Encuentra las gasolineras más cercanas y baratas en México en segundos.",
