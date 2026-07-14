@@ -151,6 +151,8 @@ function CityChip({ city }: { city: string }) {
 interface MapProps {
   userLat: number;
   userLng: number;
+  dotLat: number;
+  dotLng: number;
   activeLat: number;
   activeLng: number;
   hasPrecise: boolean;
@@ -168,8 +170,8 @@ interface MapProps {
 }
 
 function RecenterButton({
-  userLat,
-  userLng,
+  dotLat,
+  dotLng,
   hasPrecise,
   locationDenied,
   isAtGpsLocation,
@@ -177,8 +179,8 @@ function RecenterButton({
   onRecenter,
   onRequestLocation,
 }: {
-  userLat: number;
-  userLng: number;
+  dotLat: number;
+  dotLng: number;
   hasPrecise: boolean;
   locationDenied: boolean;
   isAtGpsLocation: boolean;
@@ -191,7 +193,9 @@ function RecenterButton({
   const handleClick = () => {
     if (requesting) return;
     if (hasPrecise) {
-      map.setView([userLat, userLng], typeof window !== "undefined" && window.innerWidth < 768 ? 14 : 15);
+      // Uses the live-tracked dot position, not a possibly-stale one-time GPS
+      // fix — snaps to wherever the dot actually is right now.
+      map.setView([dotLat, dotLng], typeof window !== "undefined" && window.innerWidth < 768 ? 14 : 15);
       onRecenter();
     } else {
       onRequestLocation();
@@ -246,7 +250,7 @@ function RecenterButton({
   );
 }
 
-export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
+export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activeLng, hasPrecise, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const preferred = useMapApp();
   // <Recenter> targets activeLat/activeLng (home, unless a search/shared zone is
@@ -297,8 +301,8 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
       <SearchHereButton activeLat={activeLat} activeLng={activeLng} onSearchHere={onSearchHere} />
       {!hasPrecise && atHome && !hasMovedOnce && <CityChip city={city} />}
       <RecenterButton
-        userLat={userLat}
-        userLng={userLng}
+        dotLat={dotLat}
+        dotLng={dotLng}
         hasPrecise={hasPrecise}
         locationDenied={locationDenied}
         isAtGpsLocation={isAtGpsLocation}
@@ -308,7 +312,7 @@ export default function Map({ userLat, userLng, activeLat, activeLng, hasPrecise
       />
 
       {hasPrecise && (
-        <Marker position={[userLat, userLng]} icon={currentLocationIcon}>
+        <Marker position={[dotLat, dotLng]} icon={currentLocationIcon}>
           <Popup><strong>Tu ubicación</strong></Popup>
         </Marker>
       )}
