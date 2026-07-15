@@ -89,10 +89,21 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
     );
   }, [clearSharedLocationUrl]);
 
+  // Live-tracked position for the map dot only — kept separate from `geo`
+  // (which drives the actual station search) so the dot can move continuously
+  // without triggering a refetch on every GPS tick.
+  const [livePosition, setLivePosition] = useState<{ lat: number; lng: number } | null>(null);
+
   const handleRecenter = useCallback(() => {
+    // Snap "home" to wherever the dot actually is right now, not the possibly-
+    // stale position from whenever GPS was first granted — instant, since we
+    // already have a live value on hand instead of requesting a fresh fix.
+    if (livePosition) {
+      setGeo({ status: "granted", lat: livePosition.lat, lng: livePosition.lng });
+    }
     setSearchCenter(null);
     clearSharedLocationUrl();
-  }, [clearSharedLocationUrl]);
+  }, [livePosition, clearSharedLocationUrl]);
 
   // Checking permission status never prompts — if a prior visit already granted
   // it, upgrade to precise location immediately instead of waiting for a tap on ◎.
@@ -150,6 +161,21 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
   const hasPrecise = geo.status === "granted";
   const locationDenied = geo.status === "denied";
   const fetchCenter = searchCenter ?? { lat: homeLat, lng: homeLng };
+  const dotLat = livePosition?.lat ?? homeLat;
+  const dotLng = livePosition?.lng ?? homeLng;
+
+  // Continuously tracks position for the map dot once precise GPS is granted —
+  // purely visual, deliberately not wired into homeLat/homeLng so a short open-
+  // glance-leave session (or a longer one) never triggers repeated refetches.
+  useEffect(() => {
+    if (!hasPrecise || !navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setLivePosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {}, // ignore watch errors — the last known dot position stays valid
+      GEO_OPTIONS
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [hasPrecise]);
 
   // Fetch stations whenever the effective center or fuel type changes. Ignores
   // stale responses — e.g. if the initial IP-based fetch resolves after a later
@@ -199,6 +225,8 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
           <MapWrapper
             userLat={homeLat}
             userLng={homeLng}
+            dotLat={dotLat}
+            dotLng={dotLng}
             activeLat={fetchCenter.lat}
             activeLng={fetchCenter.lng}
             hasPrecise={hasPrecise}

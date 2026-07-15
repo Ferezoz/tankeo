@@ -18,6 +18,8 @@ const Map = dynamic(() => import("./Map"), {
 interface MapWrapperProps {
   userLat: number;
   userLng: number;
+  dotLat: number;
+  dotLng: number;
   activeLat: number;
   activeLng: number;
   hasPrecise: boolean;
