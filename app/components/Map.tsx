@@ -76,9 +76,21 @@ function createPriceIcon(price: number | null, isCheapest: boolean, isClosest: b
   });
 }
 
-function Recenter({ lat, lng }: { lat: number; lng: number }) {
+function Recenter({ lat, lng, hasPrecise }: { lat: number; lng: number; hasPrecise: boolean }) {
   const map = useMap();
-  useEffect(() => { map.setView([lat, lng], map.getZoom()); }, [lat, lng, map]);
+  const wasPrecise = useRef(hasPrecise);
+  useEffect(() => {
+    // Zoom in deliberately the moment GPS is first granted (tapped or silent),
+    // matching the recenter button's own zoom level — otherwise the map just
+    // recenters at whatever zoom was already showing (e.g. the default city
+    // view), which barely looks zoomed in right after granting precise location.
+    const justGrantedPrecise = hasPrecise && !wasPrecise.current;
+    wasPrecise.current = hasPrecise;
+    const zoom = justGrantedPrecise
+      ? (typeof window !== "undefined" && window.innerWidth < 768 ? 14 : 15)
+      : map.getZoom();
+    map.setView([lat, lng], zoom);
+  }, [lat, lng, hasPrecise, map]);
   return null;
 }
 
@@ -296,7 +308,7 @@ export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activ
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Recenter lat={activeLat} lng={activeLng} />
+      <Recenter lat={activeLat} lng={activeLng} hasPrecise={hasPrecise} />
       <HomeProximityTracker userLat={userLat} userLng={userLng} onChange={handleHomeProximityChange} />
       <SearchHereButton activeLat={activeLat} activeLng={activeLng} onSearchHere={onSearchHere} />
       {!hasPrecise && atHome && !hasMovedOnce && <CityChip city={city} />}
