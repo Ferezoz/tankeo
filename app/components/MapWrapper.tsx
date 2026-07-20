@@ -23,6 +23,7 @@ interface MapWrapperProps {
   activeLat: number;
   activeLng: number;
   hasPrecise: boolean;
+  explicitGrant: boolean;
   locationDenied: boolean;
   city: string;
   requestingLocation: boolean;

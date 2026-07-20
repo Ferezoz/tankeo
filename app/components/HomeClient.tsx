@@ -74,12 +74,19 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
     }
   }, [sharedLocation]);
 
+  // Set only when GPS is granted via an explicit tap on ◎ — never by the silent
+  // auto-upgrade below — so the map's follow mode (see Map.tsx) only auto-engages
+  // from a real, conscious request instead of a quiet background permission
+  // check the user never actually asked anything of this session.
+  const [explicitGrant, setExplicitGrant] = useState(false);
+
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) { setGeo({ status: "denied" }); return; }
     setGeo({ status: "requesting" });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setGeo({ status: "granted", lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setExplicitGrant(true);
         setSearchCenter(null);
         try { localStorage.setItem(LOCATION_GRANTED_KEY, "true"); } catch {}
         clearSharedLocationUrl();
@@ -230,6 +237,7 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
             activeLat={fetchCenter.lat}
             activeLng={fetchCenter.lng}
             hasPrecise={hasPrecise}
+            explicitGrant={explicitGrant}
             locationDenied={locationDenied}
             city={initialCenter.city}
             requestingLocation={geo.status === "requesting"}

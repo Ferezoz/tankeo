@@ -193,6 +193,7 @@ interface MapProps {
   activeLat: number;
   activeLng: number;
   hasPrecise: boolean;
+  explicitGrant: boolean;
   locationDenied: boolean;
   city: string;
   requestingLocation: boolean;
@@ -290,7 +291,7 @@ function RecenterButton({
   );
 }
 
-export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activeLng, hasPrecise, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
+export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activeLng, hasPrecise, explicitGrant, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const preferred = useMapApp();
   // <Recenter> targets activeLat/activeLng (home, unless a search/shared zone is
@@ -309,16 +310,19 @@ export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activ
 
   // Follow mode: the map camera tracks the live dot as it moves (e.g. while
   // driving), so checking the app mid-drive doesn't require repeatedly
-  // re-tapping ◎ just to keep your position in view. Engages automatically the
-  // moment GPS is granted (tapped or silent) and again on any later tap of ◎;
+  // re-tapping ◎ just to keep your position in view. Engages automatically only
+  // on an explicit tap-driven grant, not the silent auto-upgrade — that path is
+  // deliberately unobtrusive (recenter once, nothing more), so it shouldn't
+  // start a continuous camera takeover the user never actually asked for this
+  // session. Also engages on any later tap of ◎ (via onEngageFollow below);
   // disengages the instant the user manually drags the map, handing control
   // back so they can freely browse other stations.
   const [isFollowing, setIsFollowing] = useState(false);
   const wasPrecise = useRef(hasPrecise);
   useEffect(() => {
-    if (hasPrecise && !wasPrecise.current) setIsFollowing(true);
+    if (hasPrecise && !wasPrecise.current && explicitGrant) setIsFollowing(true);
     wasPrecise.current = hasPrecise;
-  }, [hasPrecise]);
+  }, [hasPrecise, explicitGrant]);
   const engageFollow = useCallback(() => setIsFollowing(true), []);
   const disengageFollow = useCallback(() => setIsFollowing(false), []);
 
