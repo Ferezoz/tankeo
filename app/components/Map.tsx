@@ -150,6 +150,31 @@ function HomeProximityTracker({
   return null;
 }
 
+function FollowTracker({
+  dotLat,
+  dotLng,
+  isFollowing,
+  onUserDrag,
+}: {
+  dotLat: number;
+  dotLng: number;
+  isFollowing: boolean;
+  onUserDrag: () => void;
+}) {
+  // dragstart only fires for real user-initiated panning (Leaflet's Draggable
+  // handler), never for our own programmatic panTo below — a clean signal to
+  // disengage following without the distance-threshold guessing used elsewhere.
+  const map = useMapEvents({
+    dragstart: () => onUserDrag(),
+  });
+
+  useEffect(() => {
+    if (isFollowing) map.panTo([dotLat, dotLng]);
+  }, [dotLat, dotLng, isFollowing, map]);
+
+  return null;
+}
+
 function CityChip({ city }: { city: string }) {
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000]">
@@ -168,6 +193,7 @@ interface MapProps {
   activeLat: number;
   activeLng: number;
   hasPrecise: boolean;
+  explicitGrant: boolean;
   locationDenied: boolean;
   city: string;
   requestingLocation: boolean;
@@ -190,6 +216,7 @@ function RecenterButton({
   requesting,
   onRecenter,
   onRequestLocation,
+  onEngageFollow,
 }: {
   dotLat: number;
   dotLng: number;
@@ -199,6 +226,7 @@ function RecenterButton({
   requesting: boolean;
   onRecenter: () => void;
   onRequestLocation: () => void;
+  onEngageFollow: () => void;
 }) {
   const map = useMap();
 
@@ -209,6 +237,7 @@ function RecenterButton({
       // fix — snaps to wherever the dot actually is right now.
       map.setView([dotLat, dotLng], typeof window !== "undefined" && window.innerWidth < 768 ? 14 : 15);
       onRecenter();
+      onEngageFollow();
     } else {
       onRequestLocation();
     }
@@ -262,7 +291,7 @@ function RecenterButton({
   );
 }
 
-export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activeLng, hasPrecise, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
+export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activeLng, hasPrecise, explicitGrant, locationDenied, city, requestingLocation, stations, fuelType, selectedId, focusKey, onSelectStation, onSearchHere, onRecenter, onRequestLocation }: MapProps) {
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const preferred = useMapApp();
   // <Recenter> targets activeLat/activeLng (home, unless a search/shared zone is
@@ -278,6 +307,24 @@ export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activ
     setAtHome(newAtHome);
     if (!newAtHome) setHasMovedOnce(true);
   }, []);
+
+  // Follow mode: the map camera tracks the live dot as it moves (e.g. while
+  // driving), so checking the app mid-drive doesn't require repeatedly
+  // re-tapping ◎ just to keep your position in view. Engages automatically only
+  // on an explicit tap-driven grant, not the silent auto-upgrade — that path is
+  // deliberately unobtrusive (recenter once, nothing more), so it shouldn't
+  // start a continuous camera takeover the user never actually asked for this
+  // session. Also engages on any later tap of ◎ (via onEngageFollow below);
+  // disengages the instant the user manually drags the map, handing control
+  // back so they can freely browse other stations.
+  const [isFollowing, setIsFollowing] = useState(false);
+  const wasPrecise = useRef(hasPrecise);
+  useEffect(() => {
+    if (hasPrecise && !wasPrecise.current && explicitGrant) setIsFollowing(true);
+    wasPrecise.current = hasPrecise;
+  }, [hasPrecise, explicitGrant]);
+  const engageFollow = useCallback(() => setIsFollowing(true), []);
+  const disengageFollow = useCallback(() => setIsFollowing(false), []);
 
   // <Recenter> always re-centers the map whenever the active target changes, so we
   // know synchronously whether we're at home — no need to wait on Leaflet's async
@@ -311,6 +358,7 @@ export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activ
       <Recenter lat={activeLat} lng={activeLng} hasPrecise={hasPrecise} />
       <HomeProximityTracker userLat={userLat} userLng={userLng} onChange={handleHomeProximityChange} />
       <SearchHereButton activeLat={activeLat} activeLng={activeLng} onSearchHere={onSearchHere} />
+      <FollowTracker dotLat={dotLat} dotLng={dotLng} isFollowing={isFollowing} onUserDrag={disengageFollow} />
       {!hasPrecise && atHome && !hasMovedOnce && <CityChip city={city} />}
       <RecenterButton
         dotLat={dotLat}
@@ -321,6 +369,7 @@ export default function Map({ userLat, userLng, dotLat, dotLng, activeLat, activ
         requesting={requestingLocation}
         onRecenter={onRecenter}
         onRequestLocation={onRequestLocation}
+        onEngageFollow={engageFollow}
       />
 
       {hasPrecise && (
