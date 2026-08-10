@@ -21,7 +21,10 @@ type FetchState =
   | { status: "error"; message: string };
 
 const FUEL_TYPES: FuelType[] = ["magna", "premium", "diesel"];
-const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: true, timeout: 10000 };
+// 20s, not 10 — a cold GPS start (first high-accuracy fix, especially on
+// Android or indoors) can genuinely take longer than 10s even with
+// permission freshly granted, which was wrongly surfaced as "denied".
+const GEO_OPTIONS: PositionOptions = { enableHighAccuracy: true, timeout: 20000 };
 // Cell/Wi-Fi based, not a full GPS satellite lock — resolves in ~1s instead of
 // potentially timing out on a cold GPS start. Precise enough for "nearby stations".
 const SILENT_GEO_OPTIONS: PositionOptions = { enableHighAccuracy: false, timeout: 8000 };
@@ -91,7 +94,14 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
         try { localStorage.setItem(LOCATION_GRANTED_KEY, "true"); } catch {}
         clearSharedLocationUrl();
       },
-      () => setGeo({ status: "denied" }),
+      (err) => {
+        // Only a genuine PERMISSION_DENIED means the user actually needs to
+        // change a setting — TIMEOUT/POSITION_UNAVAILABLE (e.g. a cold GPS
+        // start on Android taking longer than the timeout below) are transient
+        // failures with permission already fine, so fall back to idle instead
+        // of wrongly telling them their location is blocked.
+        setGeo(err.code === err.PERMISSION_DENIED ? { status: "denied" } : { status: "idle" });
+      },
       GEO_OPTIONS
     );
   }, [clearSharedLocationUrl]);
