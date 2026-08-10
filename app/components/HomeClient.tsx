@@ -8,6 +8,7 @@ import StationList from "@/app/components/StationList";
 import MapWrapper from "@/app/components/MapWrapper";
 import { MapAppPicker } from "@/app/components/DirectionsButton";
 import PhoneHandoff from "@/app/components/PhoneHandoff";
+import InstallPrompt from "@/app/components/InstallPrompt";
 
 type GeoState =
   | { status: "idle" }
@@ -231,11 +232,13 @@ export default function HomeClient({ initialCenter, sharedLocation, sharedStatio
         <div className="md:hidden safe-top-header shrink-0 flex items-center gap-3 px-4 pb-2 border-b border-gray-200 dark:border-gray-800">
           <img src="/apple-icon" alt="Tankeo" className="w-7 h-7 rounded-lg" />
           <h1 className="text-base font-bold text-gray-900 dark:text-white tracking-tight mr-auto">Tankeo</h1>
+          <InstallPrompt />
           <MapAppPicker />
         </div>
         <div className="safe-top hidden md:flex shrink-0 items-center gap-2 px-4 h-[52px] border-b border-gray-200 dark:border-gray-800">
           <img src="/apple-icon" alt="Tankeo" className="w-7 h-7 rounded-lg" />
           <h1 className="text-base font-bold text-gray-900 dark:text-white tracking-tight mr-auto">Tankeo</h1>
+          <InstallPrompt />
           <PhoneHandoff lat={fetchCenter.lat} lng={fetchCenter.lng} stationId={selectedId} />
         </div>
         <div className="flex-1 p-3">
