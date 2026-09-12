@@ -15,7 +15,7 @@
     "GH_TOKEN": "${localEnv:GH_TOKEN}"
   },
   "postCreateCommand": "gh repo clone Ferezoz/dotfiles $HOME/dotfiles && $HOME/dotfiles/container/post-create.sh",
-  "postStartCommand": "$HOME/dotfiles/container/post-start.sh && ./install.zsh",
+  "postStartCommand": "./install.zsh",
   "waitFor": "postStartCommand",
   "customizations": {
     "vscode": {
